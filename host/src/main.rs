@@ -12,8 +12,8 @@
 // 8. Decode ProofOutput from journal
 // 9. Print results + save clean PNG
 
-// TODO: Implement T3 — see tasks/TASKS.md
+// TODO: Implement T3 — see docs/TASKS.md
 
 fn main() {
-    println!("ProofFrame host — not yet implemented. See tasks/TASKS.md T3.");
+    println!("ProofFrame host — not yet implemented. See docs/TASKS.md T3.");
 }

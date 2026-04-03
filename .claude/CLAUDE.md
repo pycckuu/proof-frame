@@ -127,7 +127,7 @@ proofframe/
 
 1. **Journal encoding mismatch** — guest commits fields in order A,B,C; contract MUST encode A,B,C identically. If they differ, verification always fails.
 2. **Browser pixel hashing** — `canvas.getImageData()` returns RGBA (4 bytes/pixel). Guest outputs RGB (3 bytes/pixel). Client-side hash MUST extract only RGB, skipping alpha.
-3. **`default-features = false`** on `risc0-zkvm` in guest is MANDATORY.
+3. **`risc0-zkvm`** in guest uses `default-features = false, features = ["std"]` — std is needed because `image`/`k256` deps pull in std-dependent crates.
 4. **Groth16 requires x86 + Docker** — Apple Silicon cannot generate Groth16 locally. Use dev mode or Boundless.
 5. **PNG orientation** — `image` crate does NOT apply EXIF Orientation tag. Phone photos may appear rotated.
 6. **RISC Zero v3.0.5+** — earlier versions have a critical memory vulnerability. Always use 3.0.5+.
