@@ -34,14 +34,27 @@ Act as a **Senior Tech Lead** implementing ProofFrame — a ZK content authentic
 
 1. **Execute**: Implement the core functionality.
    - Use `/coder` agent for complex implementations.
+   - **Put testable logic in `common/`** — not in the guest (which can't run native tests).
+   - Guest should call functions from `common/` for all non-trivial logic.
 
-2. **Run Tests**: Always run tests after implementation.
+2. **Write Tests**: Add tests for every new function in `common/src/lib.rs`.
+   - Use `#[cfg(test)] mod tests` in `common/src/lib.rs`
+   - Test happy path, edge cases, and error cases
+   - Test with real test images when applicable (`test_images/ethglobal_cannes.png`)
+   - Current test categories:
+     - PNG chunk extraction (valid/missing/invalid)
+     - TIFF EXIF parsing (short/long strings, GPS, bad magic, real image)
+     - Merkle proof verification (1/2/4 leaves, invalid proof, wrong root)
+     - Location formatting (exact/city/country/hidden/negative coords)
+     - Selective disclosure (reveal nothing/everything/partial/no GPS/empty EXIF)
+
+3. **Run Tests**: Always run tests after implementation.
    ```bash
    cargo test -p proofframe-common
    ```
-   Tests cover: PNG chunk extraction, TIFF EXIF parsing, Merkle proof verification, real test image validation.
+   All tests must pass before proceeding. If you added new logic, you must add new tests.
 
-3. **Component-Specific Verification**:
+4. **Component-Specific Verification**:
 
    **ZK Guest/Host (Rust):**
    ```bash
@@ -129,7 +142,8 @@ When modifying shared interfaces, verify consistency:
 ## Master Checklist
 
 - [ ] **Task Selected** from `docs/TASKS.md`
-- [ ] **Implementation Complete** & `cargo test -p proofframe-common` passes
+- [ ] **Implementation Complete** & new logic has tests
+- [ ] **Tests Pass** — `cargo test -p proofframe-common` (all green)
 - [ ] **Refactored** (`/code-refactorer`)
 - [ ] **Reviewed** (`/code-reviewer`) — high sev issues fixed
 - [ ] **Linted** (`/code-linter`) — clean

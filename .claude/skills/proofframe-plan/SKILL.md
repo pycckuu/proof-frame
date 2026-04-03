@@ -26,7 +26,7 @@ Map the ProofFrame module boundaries:
 
 | Crate/Module | Purpose | Compiles for |
 |-------------|---------|-------------|
-| `common/` | Shared types (serde only, no zkvm dep) | Both native + riscv32im |
+| `common/` | Shared types + testable logic (parsing, disclosure, Merkle) | Both native + riscv32im |
 | `methods/guest/` | ZK guest program (runs inside zkVM) | riscv32im-risc0-zkvm-elf |
 | `methods/` | Build script, exports ELF + IMAGE_ID | Native only |
 | `host/` | Proof generation, mock signing, EXIF parsing | Native only |
@@ -69,7 +69,7 @@ Photographer device → [image_bytes + config]
 - What's the cycle budget impact? (Budget: ~15-55M total for 640x480)
 - Does the code compile for `riscv32im`? (No threads, no FPU, no filesystem)
 - Are crypto operations using accelerated precompiles? (patched sha2, k256)
-- Is `default-features = false` maintained on `risc0-zkvm` in guest?
+- `risc0-zkvm` in guest uses `default-features = false, features = ["std"]`
 - Does the `image` crate stay at `features = ["png"]` only?
 
 #### Integration Lens
@@ -90,6 +90,7 @@ Include for each:
 - New types/traits introduced (add to `common/` if shared)
 - Crates to add (check riscv32im compatibility if guest-side)
 - Files touched
+- **Tests needed**: what functions go in `common/` for native testing, what test cases to cover
 - ProofFrame-specific risks (precompile availability, metadata leakage, journal mismatch)
 
 ### Phase 4: Recommendation
@@ -99,9 +100,13 @@ Output a single actionable plan:
 1. **Chosen Approach**: One-paragraph justification
 2. **Implementation Steps**: Ordered, with specific file paths
 3. **Type Signatures**: Key new `struct`, `enum`, `fn` signatures (put shared types in `common/`)
-4. **Acceptance Criteria**:
-   - ZK: `RISC0_DEV_MODE=1 cargo run --release`
+4. **Testing Plan**:
+   - What logic moves to `common/` for native testing
+   - Specific test cases to write (happy path, edge cases, error cases)
+   - Run: `cargo test -p proofframe-common`
+5. **Acceptance Criteria**:
+   - ZK: `cargo build -p proofframe-methods` + `cargo test -p proofframe-common`
    - Contracts: `forge build && forge test`
    - Frontend: `npm run build`
    - Privacy: no identity leaks at any layer
-5. **Risks & Mitigations**
+6. **Risks & Mitigations**
