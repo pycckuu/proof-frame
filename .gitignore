@@ -33,3 +33,4 @@ methods/guest/target/
 .vscode/
 *.swp
 *.swo
+output/

@@ -225,7 +225,15 @@ def generate_keypair_and_sign(png_path: Path) -> dict:
     vk = sk.get_verifying_key()
 
     # Raw ECDSA sign (no Ethereum prefix) — matches ZK guest's k256::verify
-    signature = sk.sign_digest(file_hash)  # raw r||s (64 bytes), RFC 6979
+    raw_sig = sk.sign_digest(file_hash)  # raw r||s (64 bytes), RFC 6979
+
+    # Normalize to low-S (k256 crate requires s <= n/2)
+    n = SECP256k1.order
+    r = int.from_bytes(raw_sig[:32], "big")
+    s = int.from_bytes(raw_sig[32:], "big")
+    if s > n // 2:
+        s = n - s
+    signature = r.to_bytes(32, "big") + s.to_bytes(32, "big")
 
     # Compressed public key (33 bytes)
     vk_bytes = vk.to_string()
