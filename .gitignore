@@ -1,1 +1,36 @@
 .DS_Store
+.context/
+
+# Rust
+target/
+Cargo.lock
+
+# Node / Frontend
+node_modules/
+.next/
+frontend/.next/
+frontend/node_modules/
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/lib/
+
+# RISC Zero
+methods/guest/target/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test outputs
+test_images/
+*.receipt
+*.seal
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
