@@ -328,6 +328,50 @@ pub fn verify_merkle(leaf: [u8; 32], proof: &[(bool, [u8; 32])], root: [u8; 32])
 }
 
 // ---------------------------------------------------------------------------
+// Selective disclosure
+// ---------------------------------------------------------------------------
+
+/// Format GPS coordinates according to disclosure precision.
+pub fn format_location(lat: f64, lon: f64, precision: &LocationPrecision) -> Option<String> {
+    match precision {
+        LocationPrecision::Exact => Some(alloc::format!("{:.6},{:.6}", lat, lon)),
+        LocationPrecision::City => Some(alloc::format!("{:.2},{:.2}", lat, lon)),
+        LocationPrecision::Country => Some(alloc::format!("{:.0},{:.0}", lat, lon)),
+        LocationPrecision::Hidden => None,
+    }
+}
+
+/// Apply disclosure policy to EXIF fields, returning (date, location, camera_make).
+/// Only reveals what the photographer chose — everything else is None.
+pub fn apply_disclosure(
+    exif: &ExifFields,
+    disclosure: &DisclosurePolicy,
+) -> (Option<String>, Option<String>, Option<String>) {
+    let disclosed_date = if disclosure.reveal_date {
+        exif.date.clone()
+    } else {
+        None
+    };
+
+    let disclosed_location = if disclosure.reveal_location {
+        match (exif.gps_lat, exif.gps_lon) {
+            (Some(lat), Some(lon)) => format_location(lat, lon, &disclosure.location_precision),
+            _ => None,
+        }
+    } else {
+        None
+    };
+
+    let disclosed_camera_make = if disclosure.reveal_camera_make {
+        exif.camera_make.clone()
+    } else {
+        None
+    };
+
+    (disclosed_date, disclosed_location, disclosed_camera_make)
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -575,5 +619,137 @@ mod tests {
         let exif_bytes = extract_exif_from_png(&png).expect("should find eXIf");
         let fields = parse_exif(exif_bytes);
         assert_eq!(fields.camera_make.as_deref(), Some("Canon"));
+    }
+
+    // -- format_location tests --
+
+    #[test]
+    fn test_format_location_exact() {
+        let result = format_location(43.552847, 7.017369, &LocationPrecision::Exact);
+        assert_eq!(result, Some("43.552847,7.017369".into()));
+    }
+
+    #[test]
+    fn test_format_location_city() {
+        let result = format_location(43.552847, 7.017369, &LocationPrecision::City);
+        assert_eq!(result, Some("43.55,7.02".into()));
+    }
+
+    #[test]
+    fn test_format_location_country() {
+        let result = format_location(43.552847, 7.017369, &LocationPrecision::Country);
+        assert_eq!(result, Some("44,7".into()));
+    }
+
+    #[test]
+    fn test_format_location_hidden() {
+        let result = format_location(43.552847, 7.017369, &LocationPrecision::Hidden);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_format_location_negative_coords() {
+        // Southern hemisphere, western hemisphere
+        let result = format_location(-33.8688, -151.2093, &LocationPrecision::Exact);
+        assert_eq!(result, Some("-33.868800,-151.209300".into()));
+    }
+
+    // -- apply_disclosure tests --
+
+    fn make_exif() -> ExifFields {
+        ExifFields {
+            date: Some("2026:04:03 17:29:53".into()),
+            gps_lat: Some(43.552847),
+            gps_lon: Some(7.017369),
+            camera_make: Some("Apple".into()),
+            camera_model: Some("iPhone 14 Pro".into()),
+            image_width: 640,
+            image_height: 480,
+        }
+    }
+
+    #[test]
+    fn test_disclosure_reveal_nothing() {
+        let exif = make_exif();
+        let policy = DisclosurePolicy::default(); // all false, Hidden
+        let (date, loc, make) = apply_disclosure(&exif, &policy);
+        assert!(date.is_none());
+        assert!(loc.is_none());
+        assert!(make.is_none());
+    }
+
+    #[test]
+    fn test_disclosure_reveal_everything() {
+        let exif = make_exif();
+        let policy = DisclosurePolicy {
+            reveal_date: true,
+            reveal_location: true,
+            reveal_camera_make: true,
+            location_precision: LocationPrecision::Exact,
+        };
+        let (date, loc, make) = apply_disclosure(&exif, &policy);
+        assert_eq!(date.as_deref(), Some("2026:04:03 17:29:53"));
+        assert_eq!(loc.as_deref(), Some("43.552847,7.017369"));
+        assert_eq!(make.as_deref(), Some("Apple"));
+    }
+
+    #[test]
+    fn test_disclosure_reveal_date_only() {
+        let exif = make_exif();
+        let policy = DisclosurePolicy {
+            reveal_date: true,
+            reveal_location: false,
+            reveal_camera_make: false,
+            location_precision: LocationPrecision::Hidden,
+        };
+        let (date, loc, make) = apply_disclosure(&exif, &policy);
+        assert!(date.is_some());
+        assert!(loc.is_none());
+        assert!(make.is_none());
+    }
+
+    #[test]
+    fn test_disclosure_location_city_precision() {
+        let exif = make_exif();
+        let policy = DisclosurePolicy {
+            reveal_date: false,
+            reveal_location: true,
+            reveal_camera_make: false,
+            location_precision: LocationPrecision::City,
+        };
+        let (_, loc, _) = apply_disclosure(&exif, &policy);
+        assert_eq!(loc.as_deref(), Some("43.55,7.02"));
+    }
+
+    #[test]
+    fn test_disclosure_no_gps_data() {
+        let exif = ExifFields {
+            gps_lat: None,
+            gps_lon: None,
+            ..make_exif()
+        };
+        let policy = DisclosurePolicy {
+            reveal_date: false,
+            reveal_location: true,
+            reveal_camera_make: false,
+            location_precision: LocationPrecision::Exact,
+        };
+        let (_, loc, _) = apply_disclosure(&exif, &policy);
+        assert!(loc.is_none()); // no GPS to disclose
+    }
+
+    #[test]
+    fn test_disclosure_empty_exif() {
+        let exif = ExifFields::default();
+        let policy = DisclosurePolicy {
+            reveal_date: true,
+            reveal_location: true,
+            reveal_camera_make: true,
+            location_precision: LocationPrecision::Exact,
+        };
+        let (date, loc, make) = apply_disclosure(&exif, &policy);
+        assert!(date.is_none()); // no date in empty EXIF
+        assert!(loc.is_none());  // no GPS in empty EXIF
+        assert!(make.is_none()); // no make in empty EXIF
     }
 }

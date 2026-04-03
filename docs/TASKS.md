@@ -78,7 +78,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T2.2 — Guest: Image Processing `[ ]`
+### T2.2 — Guest: Image Processing `[x]`
 
 **Files:** `methods/guest/src/main.rs`
 
@@ -98,7 +98,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T2.3 — Guest: Disclosure + Commit `[ ]`
+### T2.3 — Guest: Disclosure + Commit `[x]`
 
 **Files:** `methods/guest/src/main.rs`
 
