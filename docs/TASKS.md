@@ -23,7 +23,7 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 1: Foundation
 
-### T1.1 — Common Types `[ ]`
+### T1.1 — Common Types `[x]`
 
 **Files:** `common/src/lib.rs`, `common/Cargo.toml`
 
