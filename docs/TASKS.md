@@ -41,7 +41,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T8.1 — Test Image + Mock C2PA Signing `[x]`
+### T1.2 — Test Image + Mock C2PA Signing `[x]`
 
 **Files:** `scripts/generate-test-images.py`, `test_images/`
 
@@ -58,7 +58,7 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 2: ZK Core
 
-### T2.1 — Guest: Crypto Verification + EXIF Extraction `[ ]`
+### T2.1 — Guest: Crypto Verification + EXIF Extraction `[x]`
 
 **Files:** `methods/guest/src/main.rs`
 

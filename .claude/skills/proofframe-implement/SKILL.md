@@ -35,13 +35,21 @@ Act as a **Senior Tech Lead** implementing ProofFrame — a ZK content authentic
 1. **Execute**: Implement the core functionality.
    - Use `/coder` agent for complex implementations.
 
-2. **Component-Specific Verification**:
+2. **Run Tests**: Always run tests after implementation.
+   ```bash
+   cargo test -p proofframe-common
+   ```
+   Tests cover: PNG chunk extraction, TIFF EXIF parsing, Merkle proof verification, real test image validation.
+
+3. **Component-Specific Verification**:
 
    **ZK Guest/Host (Rust):**
    ```bash
-   RISC0_DEV_MODE=1 cargo run --release -- test_images/landscape_640x480.png
+   cargo build -p proofframe-methods  # guest compiles for riscv32im
+   cargo test -p proofframe-common    # unit tests for shared logic
+   RISC0_DEV_MODE=1 cargo run -p proofframe-host --release -- --image test_images/ethglobal_cannes.png
    ```
-   - Guest compiles for riscv32im? `default-features = false` on risc0-zkvm?
+   - Guest compiles for riscv32im? `risc0-zkvm` with `features=["std"]`?
    - Patched crates resolving correctly? Check `Cargo.lock`
 
    **Smart Contract (Solidity):**
@@ -121,7 +129,7 @@ When modifying shared interfaces, verify consistency:
 ## Master Checklist
 
 - [ ] **Task Selected** from `docs/TASKS.md`
-- [ ] **Implementation Complete** & component tests pass
+- [ ] **Implementation Complete** & `cargo test -p proofframe-common` passes
 - [ ] **Refactored** (`/code-refactorer`)
 - [ ] **Reviewed** (`/code-reviewer`) — high sev issues fixed
 - [ ] **Linted** (`/code-linter`) — clean
