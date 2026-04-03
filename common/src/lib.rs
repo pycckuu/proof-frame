@@ -64,6 +64,9 @@ pub struct ExifFields {
 }
 
 /// Private inputs to the ZK guest program.
+/// Note: EXIF is NOT a separate input — the guest extracts it from image_bytes.
+/// This prevents metadata forgery: the signature covers the entire file including EXIF,
+/// so forging any field would invalidate the camera's signature.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GuestInput {
     pub image_bytes: Vec<u8>,
@@ -74,7 +77,6 @@ pub struct GuestInput {
     pub merkle_root: [u8; 32],
     pub transform: Transform,
     pub disclosure: DisclosurePolicy,
-    pub exif: ExifFields,
 }
 
 /// Public outputs committed to the journal by the ZK guest.
