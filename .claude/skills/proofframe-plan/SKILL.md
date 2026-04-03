@@ -18,7 +18,7 @@ Before analyzing, gather ProofFrame-specific context:
 5. **Recent commits**: `git log --oneline -20`
 6. **Search for patterns**: `rg "relevant_keyword" --type rust` or `--type ts`
 7. **Check shared types**: `cat common/src/lib.rs` — Transform, DisclosurePolicy, GuestInput, ProofOutput
-8. **Task status**: `cat tasks/TASKS.md` — what's done, what's in progress
+8. **Task status**: `cat docs/TASKS.md` — what's done, what's in progress
 
 ### Phase 1: Repository Comprehension
 

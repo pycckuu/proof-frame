@@ -115,7 +115,7 @@ proofframe/
 │       ├── contracts.ts            # ABI + addresses
 │       └── imageHash.ts            # Client-side pixel hashing (RGBA→RGB!)
 ├── scripts/generate-test-images.py
-├── tasks/TASKS.md                  # Implementation task breakdown
+├── docs/TASKS.md                   # Implementation task breakdown
 ├── .env.example
 └── docs/
     ├── ARCHITECTURE.md             # Full technical reference
