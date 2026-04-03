@@ -162,14 +162,14 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 3: ZK Smoke Test
 
-### T5.1 — End-to-End ZK Test `[ ]`
+### T5.1 — End-to-End ZK Test `[x]`
 
-- [ ] Run full pipeline with test image in dev mode
-- [ ] Verify: pixel_hash is 32 bytes hex, deterministic (same input = same hash)
-- [ ] Verify: file_hash differs from pixel_hash
-- [ ] Verify: disclosed fields respect disclosure policy
-- [ ] Verify: Merkle root is consistent
-- [ ] Re-decode clean output PNG, manually compute pixel hash, confirm it matches
+- [x] Run full pipeline with test image in dev mode
+- [x] Verify: pixel_hash is 32 bytes hex, deterministic (same input = same hash)
+- [x] Verify: file_hash differs from pixel_hash
+- [x] Verify: disclosed fields respect disclosure policy
+- [x] Verify: Merkle root is consistent
+- [x] Pixel hash matches between host output and Python script (8eedb92f...)
 
 **Verify:** `RISC0_DEV_MODE=1 cargo run -p proofframe-host --release -- --image test_images/ethglobal_cannes.png`
 
@@ -177,7 +177,7 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 4: Smart Contracts
 
-### T4.1 — ImageAttestor.sol `[ ]`
+### T4.1 — ImageAttestor.sol `[x]`
 
 **Files:** `contracts/src/ImageAttestor.sol`
 
@@ -200,7 +200,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T4.2 — Deploy Script `[ ]`
+### T4.2 — Deploy Script `[x]`
 
 **Files:** `contracts/script/Deploy.s.sol`
 
@@ -213,7 +213,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T4.3 — Contract Tests `[ ]`
+### T4.3 — Contract Tests `[x]`
 
 **Files:** `contracts/test/ImageAttestor.t.sol`
 
@@ -228,7 +228,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T4.4 — ERC-7730 Clear Signing JSON `[ ]`
+### T4.4 — ERC-7730 Clear Signing JSON `[x]`
 
 **Files:** `contracts/calldata-ImageAttestor.json`
 

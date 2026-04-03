@@ -1,0 +1,96 @@
+{
+  "$schema": "https://erc7730.ethereum.org/schema.json",
+  "context": {
+    "eip712": null,
+    "contract": {
+      "deployments": [
+        {
+          "chainId": 11155111,
+          "address": "0x0000000000000000000000000000000000000000"
+        }
+      ],
+      "abi": [
+        {
+          "name": "attestImage",
+          "type": "function",
+          "inputs": [
+            { "name": "seal", "type": "bytes" },
+            { "name": "journalDigest", "type": "bytes32" },
+            { "name": "pixelHash", "type": "bytes32" },
+            { "name": "fileHash", "type": "bytes32" },
+            { "name": "merkleRoot", "type": "bytes32" },
+            { "name": "transformDesc", "type": "string" },
+            { "name": "disclosedDate", "type": "string" },
+            { "name": "disclosedLocation", "type": "string" },
+            { "name": "disclosedCameraMake", "type": "string" },
+            { "name": "imageWidth", "type": "uint32" },
+            { "name": "imageHeight", "type": "uint32" }
+          ],
+          "outputs": []
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "owner": "ProofFrame",
+    "info": {
+      "legalName": "ProofFrame",
+      "url": "https://proofframe.eth",
+      "description": "Zero-knowledge image authenticity attestation"
+    }
+  },
+  "display": {
+    "formats": {
+      "attestImage": {
+        "intent": "Attest Image Authenticity",
+        "fields": [
+          {
+            "path": "pixelHash",
+            "label": "Pixel Hash",
+            "format": "raw"
+          },
+          {
+            "path": "fileHash",
+            "label": "File Hash",
+            "format": "raw"
+          },
+          {
+            "path": "merkleRoot",
+            "label": "Trust Registry Root",
+            "format": "raw"
+          },
+          {
+            "path": "transformDesc",
+            "label": "Transforms Applied",
+            "format": "raw"
+          },
+          {
+            "path": "disclosedDate",
+            "label": "Date (if disclosed)",
+            "format": "raw"
+          },
+          {
+            "path": "disclosedLocation",
+            "label": "Location (if disclosed)",
+            "format": "raw"
+          },
+          {
+            "path": "disclosedCameraMake",
+            "label": "Camera (if disclosed)",
+            "format": "raw"
+          },
+          {
+            "path": "imageWidth",
+            "label": "Width",
+            "format": "raw"
+          },
+          {
+            "path": "imageHeight",
+            "label": "Height",
+            "format": "raw"
+          }
+        ]
+      }
+    }
+  }
+}
