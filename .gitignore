@@ -24,8 +24,7 @@ methods/guest/target/
 .env.local
 .env.*.local
 
-# Test outputs
-test_images/
+# Test outputs (but NOT test_images/ — committed for reproducible demos)
 *.receipt
 *.seal
 

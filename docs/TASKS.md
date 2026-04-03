@@ -41,14 +41,16 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T8.1 — Test Images `[ ]`
+### T8.1 — Test Image + Mock C2PA Signing `[x]`
 
 **Files:** `scripts/generate-test-images.py`, `test_images/`
 
-- [ ] Convert venue JPEG (`.context/attachments/1775230279.jpg`) to PNG -> `test_images/ethglobal_cannes.png`
-- [ ] Generate additional test PNGs: 320x240 (solid), 640x480 (gradient), 1280x960 (shapes)
-- [ ] Create companion EXIF JSON for each: `{ "date", "gps_lat", "gps_lon", "camera_make", "camera_model", "image_width", "image_height" }`
-- [ ] Edge cases: one image with no EXIF JSON, one with partial EXIF (no GPS)
+- [x] Convert venue JPEG to PNG -> `test_images/ethglobal_cannes.png`
+- [x] Embed EXIF in PNG (eXIf chunk) — simulates camera embedding metadata at capture
+- [x] Generate secp256k1 keypair + sign PNG with raw ECDSA (mocks C2PA camera signature)
+- [x] Signature covers entire file including EXIF — prevents metadata forgery
+- [x] Create demo metadata JSON showing all 32+ fields that get stripped by ZK proof
+- [x] Remove `exif` from `GuestInput` — guest extracts EXIF from `image_bytes` directly
 
 **Verify:** `python3 scripts/generate-test-images.py && ls test_images/`
 
@@ -56,7 +58,7 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 2: ZK Core
 
-### T2.1 — Guest: Crypto Verification `[ ]`
+### T2.1 — Guest: Crypto Verification + EXIF Extraction `[ ]`
 
 **Files:** `methods/guest/src/main.rs`
 
@@ -66,9 +68,13 @@ T8 (Test Images) ─────────────────────
 - [ ] ECDSA verify: `k256::ecdsa::VerifyingKey` verifies `file_hash` against `signature` + `pubkey`
 - [ ] Implement `verify_merkle(leaf, proof, root)` — SHA-256 pair-and-hash
 - [ ] Merkle proof verify: `verify_merkle(sha256(pubkey), &merkle_proof, merkle_root)`
+- [ ] Parse PNG chunks from `image_bytes`, extract eXIf chunk data
+- [ ] Parse TIFF-encoded EXIF from eXIf bytes -> populate `ExifFields`
 - [ ] Panic on any verification failure (guest panic = invalid proof)
 
-**Key rule:** Raw ECDSA over SHA-256 — NO Ethereum `personal_sign` prefix
+**Key rules:**
+- Raw ECDSA over SHA-256 — NO Ethereum `personal_sign` prefix
+- EXIF extracted from signed file bytes (not a separate input) — prevents metadata forgery
 
 ---
 
