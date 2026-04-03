@@ -4,14 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-proofframe-common = { path = "../common" }
+proofframe-common = { path = "../common", features = ["crypto"] }
 proofframe-methods = { path = "../methods" }
 risc0-zkvm = "3.0"
 image = { version = "0.25", default-features = false, features = ["png"] }
 k256 = { version = "0.13.3", features = ["ecdsa"] }
+rand = "0.8"
 sha2 = "0.10"
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 hex = "0.4"
 anyhow = "1.0"
+bincode = "1.3"

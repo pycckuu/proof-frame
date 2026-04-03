@@ -114,7 +114,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T3.1 — Host: CLI + File Reading `[ ]`
+### T3.1 — Host: CLI + File Reading `[x]`
 
 **Files:** `host/src/main.rs`, `host/Cargo.toml`
 
@@ -128,7 +128,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T3.2 — Host: Signing + Merkle Tree `[ ]`
+### T3.2 — Host: Signing + Merkle Tree `[x]`
 
 **Files:** `host/src/main.rs`
 
@@ -143,7 +143,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T3.3 — Host: Prover + Output `[ ]`
+### T3.3 — Host: Prover + Output `[x]`
 
 **Files:** `host/src/main.rs`
 

@@ -1,8 +1,8 @@
 {
-  "private_key": "92f881c70cd2f17c7075cce8b70cc2f8bd03ee013dfa1d2dde98ed715be102fe",
-  "public_key": "03b44d6b5399e073a3bf38b8006a3ef603daed3225bda20cf635af763c4cdcc916",
-  "public_key_uncompressed": "04b44d6b5399e073a3bf38b8006a3ef603daed3225bda20cf635af763c4cdcc916357fc1d06ff0bfb4de2def9f71896958e623e6265999c6ee9e71e2123d80d913",
-  "signature": "f213150133e3d33c6fb0ab9af4ba2deba72b5c1be72357bfd2591d7194fd7476d61a74e018b4d19267f083141b026cb87a62213276782a2623dd30c7a63cb670",
+  "private_key": "9d4cc10241df84a230ce2510eeebf5e214acf2ba128d2de2f2991db11ed8c7df",
+  "public_key": "02bbeeaf7f4d1649704cdae88b3f130d48df2398cb130d3c8f977b1cc92871e0ed",
+  "public_key_uncompressed": "04bbeeaf7f4d1649704cdae88b3f130d48df2398cb130d3c8f977b1cc92871e0edf31d4040bb64fb24d6e4594219369dbb048319d1472f061c430fe7006ae97afc",
+  "signature": "9171abbabd7a92a7fd23f55424fda7603296cc7d002a4f17864afa8499e20a0013ac8ae73cfe84d1ae7994246af853d7a359e605743a8f558650e4e9b4aac3c7",
   "file_hash": "033a638735baa8b0cf7815f2ac76fece8b8a0096ef95cceed818bb46ba3a25be",
   "file_size": 673190,
   "note": "Mock C2PA camera signature. Raw ECDSA secp256k1 over SHA-256(png_file_bytes). No Ethereum prefix. Signature covers entire file including embedded EXIF. In production, this key lives in the camera's secure element.",

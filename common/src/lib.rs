@@ -327,6 +327,62 @@ pub fn verify_merkle(leaf: [u8; 32], proof: &[(bool, [u8; 32])], root: [u8; 32])
     current == root
 }
 
+/// Build a binary Merkle tree from leaf hashes. Returns (root, tree_layers).
+/// Tree layers: [leaves, parent_layer, ..., [root]].
+/// Pads to next power of 2 with zero hashes.
+#[cfg(any(feature = "crypto", test))]
+pub fn build_merkle_tree(leaves: &[[u8; 32]]) -> ([u8; 32], Vec<Vec<[u8; 32]>>) {
+    use sha2::{Digest, Sha256};
+
+    if leaves.is_empty() {
+        return ([0u8; 32], Vec::new());
+    }
+
+    // Pad to next power of 2
+    let mut n = 1;
+    while n < leaves.len() {
+        n *= 2;
+    }
+    let mut current_layer: Vec<[u8; 32]> = leaves.to_vec();
+    current_layer.resize(n, [0u8; 32]);
+
+    let mut layers: Vec<Vec<[u8; 32]>> = Vec::new();
+    layers.push(current_layer.clone());
+
+    while current_layer.len() > 1 {
+        let mut parent_layer = Vec::new();
+        for pair in current_layer.chunks(2) {
+            let mut hasher = Sha256::new();
+            hasher.update(pair[0]);
+            hasher.update(pair[1]);
+            parent_layer.push(hasher.finalize().into());
+        }
+        layers.push(parent_layer.clone());
+        current_layer = parent_layer;
+    }
+
+    (current_layer[0], layers)
+}
+
+/// Generate a Merkle proof for a leaf at the given index.
+/// Returns Vec<(is_right_sibling, sibling_hash)> — compatible with `verify_merkle`.
+#[cfg(any(feature = "crypto", test))]
+pub fn generate_merkle_proof(layers: &[Vec<[u8; 32]>], leaf_index: usize) -> Vec<(bool, [u8; 32])> {
+    let mut proof = Vec::new();
+    let mut idx = leaf_index;
+
+    for layer in &layers[..layers.len().saturating_sub(1)] {
+        let sibling_idx = if idx % 2 == 0 { idx + 1 } else { idx - 1 };
+        if sibling_idx < layer.len() {
+            let is_right = idx % 2 == 0; // sibling is on the right if we're on the left
+            proof.push((is_right, layer[sibling_idx]));
+        }
+        idx /= 2;
+    }
+
+    proof
+}
+
 // ---------------------------------------------------------------------------
 // Selective disclosure
 // ---------------------------------------------------------------------------
@@ -751,5 +807,82 @@ mod tests {
         assert!(date.is_none()); // no date in empty EXIF
         assert!(loc.is_none());  // no GPS in empty EXIF
         assert!(make.is_none()); // no make in empty EXIF
+    }
+
+    // -- Merkle tree builder tests --
+
+    #[test]
+    fn test_build_merkle_tree_single_leaf() {
+        let leaf = sha256(b"key0");
+        let (root, layers) = build_merkle_tree(&[leaf]);
+        // Single leaf padded to 1 (already power of 2)
+        assert!(!layers.is_empty());
+        assert_eq!(root, *layers.last().unwrap().first().unwrap());
+        // Proof should verify
+        let proof = generate_merkle_proof(&layers, 0);
+        assert!(verify_merkle(leaf, &proof, root));
+    }
+
+    #[test]
+    fn test_build_merkle_tree_two_leaves() {
+        let a = sha256(b"key_a");
+        let b = sha256(b"key_b");
+        let (root, _) = build_merkle_tree(&[a, b]);
+        assert_eq!(root, hash_pair(a, b));
+    }
+
+    #[test]
+    fn test_build_merkle_tree_four_leaves() {
+        let leaves: Vec<[u8; 32]> = (0..4).map(|i| sha256(&[i])).collect();
+        let (root, _) = build_merkle_tree(&leaves);
+        let h01 = hash_pair(leaves[0], leaves[1]);
+        let h23 = hash_pair(leaves[2], leaves[3]);
+        assert_eq!(root, hash_pair(h01, h23));
+    }
+
+    #[test]
+    fn test_build_merkle_tree_five_leaves_padded() {
+        let leaves: Vec<[u8; 32]> = (0..5).map(|i| sha256(&[i])).collect();
+        let (root, layers) = build_merkle_tree(&leaves);
+        // 5 leaves padded to 8
+        assert_eq!(layers[0].len(), 8);
+        assert!(root != [0u8; 32]);
+    }
+
+    #[test]
+    fn test_merkle_proof_roundtrip_two_leaves() {
+        let a = sha256(b"key_a");
+        let b = sha256(b"key_b");
+        let (root, layers) = build_merkle_tree(&[a, b]);
+        let proof_a = generate_merkle_proof(&layers, 0);
+        let proof_b = generate_merkle_proof(&layers, 1);
+        assert!(verify_merkle(a, &proof_a, root));
+        assert!(verify_merkle(b, &proof_b, root));
+    }
+
+    #[test]
+    fn test_merkle_proof_roundtrip_five_leaves() {
+        let leaves: Vec<[u8; 32]> = (0..5).map(|i| sha256(&[i])).collect();
+        let (root, layers) = build_merkle_tree(&leaves);
+        for (i, leaf) in leaves.iter().enumerate() {
+            let proof = generate_merkle_proof(&layers, i);
+            assert!(verify_merkle(*leaf, &proof, root), "proof failed for leaf {i}");
+        }
+    }
+
+    #[test]
+    fn test_merkle_proof_wrong_leaf_fails() {
+        let leaves: Vec<[u8; 32]> = (0..4).map(|i| sha256(&[i])).collect();
+        let (root, layers) = build_merkle_tree(&leaves);
+        let proof = generate_merkle_proof(&layers, 0);
+        let wrong_leaf = sha256(b"not_in_tree");
+        assert!(!verify_merkle(wrong_leaf, &proof, root));
+    }
+
+    #[test]
+    fn test_build_merkle_tree_empty() {
+        let (root, layers) = build_merkle_tree(&[]);
+        assert_eq!(root, [0u8; 32]);
+        assert!(layers.is_empty());
     }
 }
