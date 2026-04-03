@@ -10,7 +10,7 @@
 
 ProofFrame proves photos are authentic without revealing who took them.
 
-A journalist takes a photo → the system generates a zero-knowledge proof that:
+A photographer takes a photo → the system generates a zero-knowledge proof that:
 - An authorized signing key committed to this file
 - The image decodes to specific pixels (all metadata stripped by construction)
 - Specific transforms (crop, grayscale, brightness) were applied correctly
@@ -19,40 +19,41 @@ A journalist takes a photo → the system generates a zero-knowledge proof that:
 The proof hides: the signing key, the photographer's identity, GPS coordinates,
 camera serial number, and any metadata the photographer chose not to reveal.
 
-**Elevator pitch for judges:** "C2PA proves photos are real but reveals who took them.
-ProofFrame uses zero-knowledge proofs to verify camera-signed images while letting
-photographers choose exactly what metadata to reveal. It's the privacy layer that
-C2PA needs, arriving just in time for the EU AI Act's August 2026 deadline."
+**Elevator pitch for judges:** "AI-generated images are flooding the internet and nobody
+can tell real from fake. C2PA camera signatures prove authenticity but leak the photographer's
+identity. ProofFrame uses zero-knowledge proofs to verify images are real and untampered —
+without revealing who took them. It's the missing trust layer for fighting visual disinformation,
+arriving just in time for the EU AI Act's August 2026 deadline."
 
 ---
 
 ## 2. PRIVACY MODEL — THE MOST CRITICAL DESIGN CONSTRAINT
 
-**Rule: The journalist's identity MUST NOT appear anywhere on-chain. Period.**
+**Rule: The photographer's identity MUST NOT appear anywhere on-chain. Period.**
 
 This is not a nice-to-have. It is the core value proposition. Every architectural
-decision flows from this constraint. If the journalist's wallet, public key, or
+decision flows from this constraint. If the photographer's wallet, public key, or
 any identifying information appears on-chain, the project fails at its premise.
 
 ### How privacy is achieved at each layer:
 
 | Layer | Privacy mechanism |
 |-------|-------------------|
-| **Blockchain tx** | Permissionless relayer submits tx. `msg.sender` = shared relayer wallet, NOT journalist. Contract has NO `msg.sender` checks. |
+| **Blockchain tx** | Permissionless relayer submits tx. `msg.sender` = shared relayer wallet, NOT photographer. Contract has NO `msg.sender` checks. |
 | **ZK proof** | Signing key is a PRIVATE input to the RISC Zero guest. Proof outputs only "some key in this Merkle tree signed this" — not WHICH key. |
 | **World ID** | Nullifier hash is scoped to `(app_id, action_id)`. Different per image = unlinkable. Proof reveals nothing about which human. |
 | **Image file** | Published PNG is re-encoded from decoded pixels. Zero EXIF/XMP/IPTC/C2PA metadata survives. |
-| **ENS subnames** | Created by relayer via NameStone API (project-level auth). No journalist wallet referenced. |
-| **Network** | Journalist communicates only with relayer API. Can use Tor/VPN for IP privacy. |
+| **ENS subnames** | Created by relayer via NameStone API (project-level auth). No photographer wallet referenced. |
+| **Network** | Photographer communicates only with relayer API. Can use Tor/VPN for IP privacy. |
 
 ### What the contract MUST NOT do:
 ```solidity
-// ❌ WRONG — reveals journalist identity
+// ❌ WRONG — reveals photographer identity
 attestations[pixelHash].attester = msg.sender;
 
 // ✅ CORRECT — no identity stored
 attestations[pixelHash].exists = true;
-// msg.sender is the relayer, not the journalist
+// msg.sender is the relayer, not the photographer
 ```
 
 ### What the contract MUST do:
@@ -130,11 +131,11 @@ verifier.verify(seal, GUEST_IMAGE_ID, sha256(journal));
 ┌─────────────────────────────────────────────────────────────┐
 │                RELAYER API (Next.js /api/relay)               │
 │                                                             │
-│  13. Receives proof data from journalist's browser          │
+│  13. Receives proof data from user's browser          │
 │  14. Submits attestImage() tx from RELAYER_PRIVATE_KEY      │
 │  15. msg.sender = relayer wallet (shared across all users)  │
 │  16. Calls NameStone API to create ENS subname              │
-│  17. Returns tx hash + ENS name to journalist               │
+│  17. Returns tx hash + ENS name to user               │
 └──────────────────┬──────────────────────────────────────────┘
                    │ attestImage(pixelHash, seal, ...)
                    ▼
@@ -160,7 +161,7 @@ verifier.verify(seal, GUEST_IMAGE_ID, sha256(journal));
 │  • Disclosed metadata: date, city, camera make              │
 │                                                             │
 │  NEVER PUBLISHED:                                           │
-│  • Signing key, journalist wallet, GPS coordinates,         │
+│  • Signing key, photographer wallet, GPS coordinates,         │
 │    camera serial number, photographer name, thumbnail,      │
 │    editing history, or any undisclosed EXIF field            │
 └─────────────────────────────────────────────────────────────┘
@@ -231,7 +232,7 @@ hash verification. JPEG support is Phase 2."
 
 ### 4.4 Permissionless proof submission (relayer pattern)
 
-**Problem:** If the journalist submits the tx directly, `msg.sender` = journalist's wallet.
+**Problem:** If the photographer submits the tx directly, `msg.sender` = photographer's wallet.
 Every photo links to one wallet. Privacy destroyed.
 
 **Decision:** The contract has NO access control. It ONLY checks ZK proof validity.
@@ -262,14 +263,41 @@ frontend addition.
 image content. A World ID proof for image A can't be reused for image B.
 
 **Relayer compatibility:** World ID's `verifyProof` does NOT check `msg.sender`. It verifies
-pure cryptographic parameters. A relayer can submit on behalf of the journalist.
+pure cryptographic parameters. A relayer can submit on behalf of the photographer.
 
-### 4.6 ENS via NameStone (gasless, no journalist wallet)
+### 4.6 ENS via NameStone (gasless, no photographer wallet)
 
 **Decision:** The relayer backend calls NameStone API to create subnames like
 `photo-001.proofframe.eth` with text records containing the pixel hash and disclosed metadata.
-NameStone uses project-level API key authentication — no journalist wallet ever involved.
+NameStone uses project-level API key authentication — no photographer wallet ever involved.
 Subnames resolve via CCIP-Read (ERC-3668). Zero on-chain gas, zero identity leakage.
+
+### 4.8 Local-First Trust Registry (MVP)
+
+**Problem:** The original design used Chainlink CRE to fetch camera manufacturer keys from an
+external trust registry via Confidential HTTP (TEE). This adds complexity and an external
+dependency that isn't needed for the hackathon MVP.
+
+**Decision:** MVP uses a hardcoded list of 3-5 mock secp256k1 public keys compiled into the
+host program. The host builds a Merkle tree from these keys at proof generation time.
+
+**Why this works:** The guest program is completely agnostic to how the Merkle tree was built.
+It receives `(merkle_root, merkle_proof, pubkey)` as private inputs and verifies:
+1. `sha256(pubkey)` is in the tree at `merkle_root` via `merkle_proof`
+2. The ECDSA signature was made by `pubkey`
+
+The guest doesn't know or care whether the keys came from a hardcoded list, a database,
+or a Chainlink CRE workflow. This makes CRE a pure bolt-on enhancement:
+
+**Upgrade path to CRE:**
+- Replace hardcoded keys in host with CRE-fetched keys
+- Same Merkle tree construction, same interface, same guest program
+- Same contract — it only sees the `merkle_root` in the journal
+- Zero changes to guest, contract, or frontend
+
+**For judges:** "The trust registry is modular. For the hackathon we use a curated key list.
+In production, Chainlink CRE fetches manufacturer keys via Confidential HTTP — same Merkle
+tree, same ZK proof, same contract. The privacy guarantees are identical at every trust level."
 
 ### 4.7 Ledger role: Clear Signing on transactions + narrative
 
@@ -521,14 +549,20 @@ This is near-perfect alignment.
 
 **Requirement:** "Present at the ENS booth in person on Sunday morning." MANDATORY.
 
-### Chainlink ($7K pool — Privacy Standard track)
+### Chainlink ($7K pool — Privacy Standard track) — OPTIONAL, NOT IN MVP
 
-**Integration:** CRE workflow with Confidential HTTP
+**Status:** Not required for MVP. The trust registry uses hardcoded mock keys (see 4.8).
+CRE is a bolt-on enhancement that replaces hardcoded keys with TEE-fetched keys.
+
+**Integration (if time permits):** CRE workflow with Confidential HTTP
 - Fetches camera manufacturer trust registry via private API call
 - API credentials stay inside TEE — never exposed
 - Returns Merkle root of authorized keys on-chain
 - `cre workflow simulate` output is sufficient for the bounty
 - Per bounty: "Our team will deploy it to live CRE for you"
+
+**Upgrade path:** Replace hardcoded keys in host → CRE-fetched keys. Same Merkle tree,
+same guest, same contract. Zero architectural changes needed.
 
 ### World ID ($20K pool — conditional)
 
@@ -550,7 +584,7 @@ This is near-perfect alignment.
 | **Level 3** (production) | C2PA camera key | "An authorized camera CAPTURED this" — true provenance | When Leica/Sony/Nikon keys integrated |
 
 **The honest line for judges:**
-"With software signing, this is a reputation system — if a journalist signs fakes, their key
+"With software signing, this is a reputation system — if a signer attests fakes, their key
 gets revoked. The same ZK pipeline works with C2PA camera signatures. When we plug in
 Leica or Sony factory keys, the proof upgrades from reputation to capture-level trust.
 Our contribution is the privacy layer that works at every trust level."
@@ -561,8 +595,9 @@ Our contribution is the privacy layer that works at every trust level."
 
 **0:00-0:15 — Hook:** Two photos side by side. "Which is real? AI detectors can't tell."
 
-**0:15-0:40 — Problem:** "C2PA gives us camera signatures but leaks everything. The EU AI Act
-mandates content provenance by August 2026. Journalists can't use a system that identifies them."
+**0:15-0:40 — Problem:** "AI-generated fakes are eroding trust in all visual media. C2PA camera
+signatures prove authenticity but leak the photographer's identity. The EU AI Act mandates
+content provenance by August 2026 — we need proof without surveillance."
 
 **0:40-2:00 — Live demo:**
 1. Upload test photo
@@ -578,7 +613,7 @@ mandates content provenance by August 2026. Journalists can't use a system that 
 
 **2:30-2:50 — Integrations:** Ledger Clear Signing, ENS subnames, Chainlink CRE simulation
 
-**2:50-3:00 — Close:** "ProofFrame: prove it's real without revealing who you are."
+**2:50-3:00 — Close:** "ProofFrame: fight disinformation with proof, not surveillance."
 
 **Demo prep:**
 - Pre-compute 4 proofs (3 disclosure levels + 1 matching live demo)

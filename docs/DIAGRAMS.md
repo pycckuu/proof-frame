@@ -4,7 +4,7 @@
 
 ```mermaid
 graph TB
-    subgraph JOURNALIST["👤 Journalist's Device (PRIVATE)"]
+    subgraph PHOTOGRAPHER["👤 Photographer's Device (PRIVATE)"]
         PHOTO[📷 Take Photo<br/>PNG with EXIF metadata]
         CONFIG[⚙️ Configure<br/>Disclosure + Transforms]
         WORLDID[🌍 World ID Scan<br/>signal = pixelHash]
@@ -15,7 +15,7 @@ graph TB
     end
 
     subgraph RELAY["📡 Relayer API (Anonymous)"]
-        RELAYER[Next.js /api/relay<br/>msg.sender = relayer wallet<br/>NOT journalist]
+        RELAYER[Next.js /api/relay<br/>msg.sender = relayer wallet<br/>NOT photographer]
     end
 
     subgraph CHAIN["⛓️ Ethereum Sepolia"]
@@ -39,7 +39,7 @@ graph TB
     GUEST -->|re-encode pixels| CLEAN
     ATTEST --> BADGE
 
-    style JOURNALIST fill:#f3e8ff,stroke:#7c3aed,color:#1a1a1a
+    style PHOTOGRAPHER fill:#f3e8ff,stroke:#7c3aed,color:#1a1a1a
     style PROVER fill:#ede9fe,stroke:#6d28d9,color:#1a1a1a
     style RELAY fill:#fef3c7,stroke:#d97706,color:#1a1a1a
     style CHAIN fill:#dbeafe,stroke:#2563eb,color:#1a1a1a
@@ -129,7 +129,7 @@ graph TB
         B1["Ledger hardware device<br/>Signs tx, Clear Signing UX"]
         B2["ecrecover<br/>Native EVM, ~3K gas"]
         B3["World ID verifyProof<br/>signal = pixelHash, ~250K gas"]
-        B4["msg.sender = relayer<br/>NOT journalist"]
+        B4["msg.sender = relayer<br/>NOT photographer"]
         B1 --> B2 --> B3 --> B4
     end
 
@@ -236,7 +236,7 @@ graph LR
     subgraph L1["Level 1: Hackathon"]
         L1S["Mock software key<br/>signs file hash"]
         L1P["Proves: registered signer<br/>committed to this image"]
-        L1T["Trust: REPUTATION<br/>Revoke key if journalist lies"]
+        L1T["Trust: REPUTATION<br/>Revoke key if signer attests fakes"]
     end
 
     subgraph L2["Level 2: Production"]
@@ -268,7 +268,7 @@ graph LR
 
 ```mermaid
 sequenceDiagram
-    participant J as 👤 Journalist
+    participant J as 👤 Photographer
     participant F as 🌐 Frontend
     participant R as 📡 Relayer API
     participant C as ⛓️ Contract
@@ -276,7 +276,7 @@ sequenceDiagram
 
     J->>F: Upload photo + config
     F->>F: Generate ZK proof locally
-    Note over F: Proof generation happens<br/>on journalist's device or<br/>ProofFrame server
+    Note over F: Proof generation happens<br/>on photographer's device or<br/>ProofFrame server
 
     opt World ID enabled
         J->>F: World ID scan (QR)
@@ -284,7 +284,7 @@ sequenceDiagram
     end
 
     F->>R: POST {seal, journal, worldIdProof}
-    Note over F,R: HTTPS only — journalist's<br/>wallet NEVER involved
+    Note over F,R: HTTPS only — photographer's<br/>wallet NEVER involved
 
     R->>C: attestImage(pixelHash, seal, ...)
     Note over R,C: msg.sender = 0xRelayer<br/>shared across ALL users
@@ -299,7 +299,7 @@ sequenceDiagram
     C->>C: Store attestation (NO identity)
 
     R->>N: Create subname via API
-    Note over R,N: Project-level API key<br/>No journalist wallet
+    Note over R,N: Project-level API key<br/>No photographer wallet
 
     R->>F: {txHash, ensName}
     F->>J: Show result + clean PNG download

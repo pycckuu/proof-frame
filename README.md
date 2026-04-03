@@ -6,7 +6,7 @@ AI-generated images and deepfakes are flooding the internet. Anyone can fabricat
 
 ProofFrame fights back. It's a zero-knowledge content authenticity system that cryptographically proves an image hasn't been tampered with — while keeping the photographer anonymous. Built with RISC Zero zkVM for [ETHGlobal Cannes 2026](https://ethglobal.com/events/cannes2026).
 
-C2PA camera signatures already prove photos haven't been altered — but they reveal the photographer's GPS, camera serial number, and identity. Journalists in conflict zones, whistleblowers, and activists can't use a system that identifies them. ProofFrame keeps the tamper-proof guarantee while adding privacy: a ZK proof that says *"an authorized device signed this exact image, and it hasn't been modified since"* — without revealing *which device* or *who signed it*.
+AI-generated images and deepfakes are the backbone of modern disinformation. C2PA camera signatures prove photos haven't been altered — but they reveal the photographer's GPS, camera serial number, and identity. Nobody will adopt a system that turns every photo into a surveillance record. ProofFrame keeps the tamper-proof guarantee while adding privacy: a ZK proof that says *"an authorized device signed this exact image, and it hasn't been modified since"* — without revealing *which device* or *who signed it*. Real proof. No surveillance. Disinformation loses.
 
 ---
 
@@ -46,7 +46,7 @@ flowchart TD
 
     CRE -- "fetch keys via TEE" --> TR
 
-    subgraph DEVICE [" Journalist's Device "]
+    subgraph DEVICE [" Photographer's Device "]
         A1["Take PNG photo"]
         A2["Choose what to reveal"]
         A3["Sign with ECDSA key"]
@@ -119,22 +119,22 @@ flowchart TD
     style VERIFY fill:#0a6847,color:#fff
 ```
 
-> **Privacy guarantee**: the signing key, full EXIF, and raw image never leave the zkVM. The relayer's wallet appears on-chain — not the journalist's. The contract stores only the pixel hash. No identity at any layer.
+> **Privacy guarantee**: the signing key, full EXIF, and raw image never leave the zkVM. The relayer's wallet appears on-chain — not the photographer's. The contract stores only the pixel hash. No identity at any layer.
 
 ---
 
 ## Privacy Model
 
-The journalist's identity is hidden at **every layer**:
+The photographer's identity is hidden at **every layer**:
 
 | Layer | How privacy is achieved |
 |-------|------------------------|
-| **Blockchain tx** | Relayer submits from shared wallet. `msg.sender` = relayer, NOT journalist |
+| **Blockchain tx** | Relayer submits from shared wallet. `msg.sender` = relayer, NOT photographer |
 | **ZK proof** | Signing key is a private input. Proof reveals only "some key in this Merkle tree" |
 | **World ID** | Nullifier hash is unlinkable across images. Proves "a unique human" not "which human" |
 | **Image file** | Published PNG re-encoded from pixels. Zero metadata survives decode |
-| **ENS subnames** | Created by relayer via NameStone API. No journalist wallet involved |
-| **Network** | Journalist only talks to relayer API. Can use Tor/VPN |
+| **ENS subnames** | Created by relayer via NameStone API. No photographer wallet involved |
+| **Network** | Photographer only talks to relayer API. Can use Tor/VPN |
 
 ### Selective Disclosure
 
@@ -221,15 +221,15 @@ cd frontend && npm install && npm run dev
 
 ### Ledger — Hardware Trust ($10K pool)
 
-ERC-7730 Clear Signing JSON for `attestImage()` displays human-readable fields on the Ledger screen. Positions Ledger as a content authenticity device — every journalist becomes a potential Ledger customer.
+ERC-7730 Clear Signing JSON for `attestImage()` displays human-readable fields on the Ledger screen. Positions Ledger as a content authenticity device — every photographer becomes a potential Ledger customer.
 
 ### ENS — Discovery Layer ($10K pool)
 
 ZK proof hashes stored as text records (`io.proofframe.proof`). Gasless per-image subnames via NameStone + CCIP-Read. The bounty literally asks for *"store ZK proofs in text records."*
 
-### Chainlink — Trust Registry ($7K pool)
+### Chainlink — Trust Registry ($7K pool) — Optional
 
-CRE Workflow with Confidential HTTP fetches camera manufacturer keys. API credentials stay inside TEE.
+CRE Workflow with Confidential HTTP fetches camera manufacturer keys. API credentials stay inside TEE. MVP uses a local hardcoded trust registry; CRE is a bolt-on upgrade with the same Merkle tree interface.
 
 ### World ID — Anti-Sybil ($20K pool, conditional)
 
@@ -258,7 +258,7 @@ CRE Workflow with Confidential HTTP fetches camera manufacturer keys. API creden
 | Signature | Raw ECDSA / SHA-256 | Ethereum `personal_sign` uses Keccak (not accelerated in zkVM) |
 | Image format | PNG only | Lossless + integer-only decode (no float-heavy JPEG DCT) |
 | Submission | Permissionless relayer | `msg.sender` irrelevant; contract checks only proof validity |
-| ENS | NameStone subnames | CCIP-Read, gasless, project-level auth, no journalist wallet |
+| ENS | NameStone subnames | CCIP-Read, gasless, project-level auth, no photographer wallet |
 
 ---
 
@@ -274,9 +274,9 @@ CRE Workflow with Confidential HTTP fetches camera manufacturer keys. API creden
 
 ## Why Now
 
-**EU AI Act Article 50** mandates content provenance by **August 2, 2026** — four months from this hackathon. Penalties: up to €35 million or 7% of global annual turnover. C2PA provides camera-level signing, but its privacy model is fundamentally broken for anyone who needs to prove content authenticity without being identified.
+AI-generated fakes are eroding trust in all visual media. When every image is suspect, disinformation wins by default. **EU AI Act Article 50** mandates content provenance by **August 2, 2026** — four months from this hackathon. Penalties: up to €35 million or 7% of global annual turnover. C2PA provides camera-level signing, but its privacy model is fundamentally broken — nobody will adopt authenticity tools that double as surveillance.
 
-ProofFrame is the privacy layer that C2PA needs.
+ProofFrame is the missing layer: proof without surveillance. Authenticity that fights disinformation without sacrificing privacy.
 
 ---
 
