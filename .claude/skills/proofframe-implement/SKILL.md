@@ -19,8 +19,8 @@ Act as a **Senior Tech Lead** implementing ProofFrame — a ZK content authentic
 
 ### Phase 1: Preparation
 
-1. **Pick Task**: Read `tasks/TASKS.md`, select the next unblocked task.
-2. **Mark In-Progress**: Update the task status in `tasks/TASKS.md`.
+1. **Pick Task**: Read `docs/TASKS.md`, select the next unblocked task.
+2. **Mark In-Progress**: Update the task status in `docs/TASKS.md`.
 3. **Check Dependencies**: Ensure prerequisite tasks are complete.
 4. **Read Context**: Read `docs/ARCHITECTURE.md` sections relevant to this task.
 
@@ -81,7 +81,7 @@ Before committing, verify ALL of these:
 
 ### Phase 4: Documentation
 
-1. **Update Task Status**: Mark task as complete in `tasks/TASKS.md`.
+1. **Update Task Status**: Mark task as complete in `docs/TASKS.md`.
 2. **Update Architecture**: If any architectural decision changed, update `docs/ARCHITECTURE.md`.
 3. **Update README**: If public API or usage changed, update `README.md`.
 
@@ -120,12 +120,12 @@ When modifying shared interfaces, verify consistency:
 
 ## Master Checklist
 
-- [ ] **Task Selected** from `tasks/TASKS.md`
+- [ ] **Task Selected** from `docs/TASKS.md`
 - [ ] **Implementation Complete** & component tests pass
 - [ ] **Refactored** (`/code-refactorer`)
 - [ ] **Reviewed** (`/code-reviewer`) — high sev issues fixed
 - [ ] **Linted** (`/code-linter`) — clean
 - [ ] **Privacy Checklist** — all items verified
-- [ ] **Task Status Updated** in `tasks/TASKS.md`
+- [ ] **Task Status Updated** in `docs/TASKS.md`
 - [ ] **Commit Verified & Applied**
 - [ ] **PR Created** (if appropriate)
