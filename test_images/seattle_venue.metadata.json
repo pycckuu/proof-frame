@@ -1,0 +1,43 @@
+{
+  "_description": "This JSON shows ALL metadata the camera embedded in the original file. The ZK proof strips everything except selectively disclosed fields. This file is for demo display only \u2014 the proof reads EXIF from the PNG.",
+  "disclosable": {
+    "date": "2026-04-03T17:29:53+02:00",
+    "gps_lat": 43.549261,
+    "gps_lon": 7.017528,
+    "camera_make": "Apple",
+    "image_width": 640,
+    "image_height": 480
+  },
+  "stripped": {
+    "camera_model": "iPhone 14 Pro",
+    "body_serial_number": "032024001849",
+    "lens_serial_number": "0000c0e934",
+    "lens_model": "RF24-105mm F4 L IS USM",
+    "firmware_version": "26.4",
+    "date_time_original": "2026:04:03 17:29:53",
+    "sub_sec_time_original": "83",
+    "offset_time_original": "+02:00",
+    "exposure_time": "1/125",
+    "f_number": 5.6,
+    "iso_speed": 800,
+    "focal_length_mm": 35.0,
+    "metering_mode": "Pattern",
+    "flash": "Off, Did not fire",
+    "white_balance": "Auto",
+    "exposure_program": "Aperture priority",
+    "gps_altitude_m": 0.0,
+    "artist": "Marie Dupont",
+    "copyright": "Copyright 2026 Marie Dupont. All rights reserved.",
+    "c2pa_claim_generator": "Apple iPhone 14 Pro/26.4",
+    "c2pa_signature_type": "COSE_Sign1 with ES256",
+    "c2pa_certificate_subject": "CN=Apple Camera Signing,O=Apple Inc,C=US",
+    "c2pa_certificate_serial": "4A:3B:2C:1D:00:FF:EE:DD",
+    "xmp_creator": "Marie Dupont",
+    "xmp_creator_tool": "Adobe Lightroom Classic 13.2",
+    "iptc_creator_job_title": "Freelance Photojournalist",
+    "iptc_city": "Cannes",
+    "iptc_country": "France",
+    "iptc_email": "marie.dupont@example.com",
+    "iptc_phone": "+33 6 12 34 56 78"
+  }
+}
