@@ -371,14 +371,20 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T7.2 — Ledger Demo Flow `[x]`
+### T7.2 — Ledger Clear Signing Integration `[x]`
 
-**Files:** `contracts/calldata-ImageAttestor.json`
+**Files:** `contracts/calldata-ImageAttestor.json`, `frontend/app/attest/page.tsx`, `frontend/lib/wagmi.ts`, `frontend/app/providers.tsx`, `frontend/app/layout.tsx`
 
-- [x] ERC-7730 JSON updated with function selector `0x203f9663`, `$id`, proper format
-- [x] Ledger Stax shows text-only during signing (no image display — ERC-7730 limitation)
-- [x] Fields displayed: Pixel Hash, File Hash, Trust Registry, Transforms, Date, Location, Camera, Size
-- [x] Note: `erc7730` Python linter requires Python 3.12 (not 3.14) — validate at hackathon
+- [x] ERC-7730 JSON: fixed contract address, added `excluded` array for binary blobs, improved labels
+- [x] All 14 params accounted for (11 in fields + 3 in excluded)
+- [x] Function selector `0xd747d8b5` verified via `forge inspect`
+- [x] Frontend: wagmi v2 + ConnectKit for wallet connection on attest page
+- [x] Attest page: "Connect Wallet" option appears after World ID verification
+- [x] Submit flow: EIP-712 typed data signing via wagmi `signTypedData` (triggers Ledger Clear Signing screen), then relay submits tx
+- [x] Privacy preserved: wallet signature is for UX only, relay still submits from its own wallet (`msg.sender` = relayer)
+- [x] Wallet connection is optional — attestation works without it via anonymous relay
+- [x] Fields on Ledger: Pixel Hash, File Hash, Trust Registry Root, Transforms, Date, Location, Camera, Dimensions, World ID
+- [x] Registry PR: submit to `LedgerHQ/clear-signing-erc7730-registry`
 
 ---
 

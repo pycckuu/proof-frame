@@ -72,9 +72,11 @@ export async function POST(req: Request) {
         body.disclosedCameraMake ?? "",
         body.imageWidth ?? 0,
         body.imageHeight ?? 0,
-        // World ID params (optional — pass 0 to skip)
+        // World ID params — randomize nullifier when using mock to avoid DuplicateNullifier
         BigInt(body.worldIdRoot || 0),
-        BigInt(body.worldIdNullifier || 0),
+        process.env.USE_MOCK_WORLD_ID === "true"
+          ? BigInt(`0x${Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, "0")).join("")}`)
+          : BigInt(body.worldIdNullifier || 0),
         decodeWorldIdProof(body.worldIdProof),
       ],
     });
@@ -139,7 +141,7 @@ export async function POST(req: Request) {
         const textRecords: Record<string, string> = {
           // Standard ENS records (rendered by ENS-aware apps)
           ...(ipfsCid ? { avatar: `ipfs://${ipfsCid}/image.png` } : {}),
-          url: `https://proofframe.xyz/verify?hash=${(body.pixelHash ?? "").replace(/^0x/, "")}`,
+          url: `https://proof-frame.eth/verify?hash=${(body.pixelHash ?? "").replace(/^0x/, "")}`,
           description: buildDescription(body, ipfsCid),
 
           // ProofFrame core attestation data

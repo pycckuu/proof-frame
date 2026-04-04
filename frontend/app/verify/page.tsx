@@ -267,7 +267,7 @@ export default function VerifyPage() {
               {/* Hash Section */}
               <div className="space-y-6">
                 <HashField icon="fingerprint" label="File Hash" value={attestation.fileHash} />
-                <HashField icon="account_tree" label="Merkle Root" value={attestation.merkleRoot} />
+                <HashField icon="devices" label="Device Registry Root" value={attestation.merkleRoot} />
               </div>
 
               {/* ENS Subname + Text Records */}

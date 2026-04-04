@@ -132,8 +132,8 @@ graph TB
 
     subgraph PATH_B["Path B: On-Chain (Public, EVM Native)"]
         direction TB
-        B1["Ledger hardware device<br/>Signs tx, Clear Signing UX"]
-        B2["ecrecover<br/>Native EVM, ~3K gas"]
+        B1["Ledger hardware device<br/>EIP-712 typed data signing<br/>Clear Signing shows attestation fields"]
+        B2["Signature for UX only<br/>NOT stored on-chain"]
         B3["World ID verifyProof<br/>signal = pixelHash, ~250K gas"]
         B4["msg.sender = relayer<br/>NOT photographer"]
         B1 --> B2 --> B3 --> B4
@@ -320,9 +320,9 @@ graph TB
         CONTRACT["ImageAttestor.sol<br/>Permissionless verifier"]
     end
 
-    subgraph LEDGER["🔐 Ledger ($10K pool)"]
-        LED_CS["Clear Signing JSON<br/>ERC-7730 descriptor<br/>→ $4K track"]
-        LED_AI["Content authenticator<br/>narrative<br/>→ $6K AI Agents track"]
+    subgraph LEDGER["🔐 Ledger ($10K pool) — IMPLEMENTED"]
+        LED_CS["Clear Signing JSON<br/>ERC-7730 descriptor<br/>11 fields + 3 excluded<br/>→ $4K track"]
+        LED_AI["Content authenticator<br/>EIP-712 signing on Ledger<br/>wagmi + ConnectKit<br/>→ $6K AI Agents track"]
     end
 
     subgraph ENS_S["📛 ENS ($10K pool)"]

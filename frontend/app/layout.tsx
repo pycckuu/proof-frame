@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
+import { Providers } from "./providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,9 +36,11 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-body min-h-screen flex flex-col selection:bg-primary/30 selection:text-primary`}>
-        <Navigation />
-        <div className="flex-grow flex flex-col">{children}</div>
-        <Footer />
+        <Providers>
+          <Navigation />
+          <div className="flex-grow flex flex-col">{children}</div>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

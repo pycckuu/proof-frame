@@ -309,10 +309,19 @@ tree, same ZK proof, same contract. The privacy guarantees are identical at ever
 
 ### 4.7 Ledger role: Clear Signing on transactions + narrative
 
+**Status: IMPLEMENTED**
+
 **Decision:** Ledger's primary hackathon value is:
 1. **ERC-7730 Clear Signing JSON** for the `attestImage()` function → targets $4K bounty
 2. **Narrative:** "Ledger as content authenticator device" → targets $6K AI Agents bounty
 3. **Demo impact:** Physical button press on Ledger during live demo
+
+**Implementation:**
+- ERC-7730 descriptor: `contracts/calldata-ImageAttestor.json` with all 14 params (11 displayed, 3 excluded)
+- Frontend: wagmi v2 + ConnectKit for optional wallet connection on attest page
+- Flow: After ZK proof + World ID, user optionally connects wallet (Ledger/MetaMask) → clicks "Submit Attestation" → wallet displays attestation fields via EIP-712 typed data signing → signature captured → relay submits tx from its own wallet
+- **Privacy preserved**: The EIP-712 signature is for Ledger UX only. It is NOT stored on-chain. `msg.sender` remains the relayer wallet.
+- Ledger connection is optional — attestation works without it via anonymous relay
 
 The content signing key inside the ZK proof is a separate mock key. In production, this
 key would live on the Ledger's secure element, but verifying Ledger's Ethereum-formatted
