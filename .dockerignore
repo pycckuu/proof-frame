@@ -1,0 +1,12 @@
+target/
+frontend/
+contracts/
+docs/
+scripts/
+.git/
+.github/
+.claude/
+.env*
+*.md
+node_modules/
+.next/

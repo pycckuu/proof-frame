@@ -413,31 +413,32 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 10: Real Groth16 Proofs (RunPod Serverless)
 
-### T10.1 — Docker Image for GPU Proving `[ ]`
+### T10.1 — Docker Image for GPU Proving `[x]`
 
 **Files:** `Dockerfile`, `handler.py`
 
-- [ ] Multi-stage Docker build: compile host binary with CUDA support, package with Python RunPod handler
-- [ ] Pre-compile guest ELF at build time (not runtime)
-- [ ] Python handler: decode base64 image, call Rust binary, return receipt JSON
+- [x] Multi-stage Docker build: compile host binary with CUDA support, package with Python RunPod handler
+- [x] Pre-compile guest ELF at build time (not runtime)
+- [x] Python handler: decode base64 image, call Rust binary, return receipt JSON
 - [ ] Test locally with `RISC0_DEV_MODE=1`, then on RunPod with real GPU
-- [ ] Push to GHCR: `ghcr.io/pycckuu/proofframe-prover:latest`
+- [x] Push to GHCR via GitHub Actions: `.github/workflows/docker-prover.yml`
 
-### T10.2 — RunPod Serverless Endpoint `[ ]`
+### T10.2 — RunPod Serverless Endpoint `[~]`
 
 - [ ] Create RunPod serverless endpoint (RTX 4090, idle timeout 5 min, max workers 2)
-- [ ] Test via curl: submit image, poll status, get Groth16 receipt
+- [ ] Point to GHCR image: `ghcr.io/pycckuu/proofframe-prover:latest`
+- [ ] Test via curl: submit image, poll status, get receipt
 - [ ] Verify receipt is valid (real Groth16, not dev mode)
 
-### T10.3 — Frontend Prove API + UI `[ ]`
+### T10.3 — Frontend Prove API + UI `[x]`
 
 **Files:** `frontend/app/api/prove/route.ts`, `frontend/app/api/prove/status/route.ts`, `frontend/app/attest/page.tsx`
 
-- [ ] `/api/prove` POST: submit image + config to RunPod, return jobId
-- [ ] `/api/prove/status` GET: poll RunPod status, return receipt when done
-- [ ] Attest page: "Generate Proof (GPU)" button with progress indicator
-- [ ] Keep manual receipt upload as fallback
-- [ ] Add env vars: `RUNPOD_API_KEY`, `RUNPOD_ENDPOINT_ID`
+- [x] `/api/prove` POST: submit image + config to RunPod, return jobId
+- [x] `/api/prove/status` GET: poll RunPod status, return receipt when done
+- [x] Attest page: "Generate Proof (GPU)" button with progress indicator
+- [x] Keep manual receipt upload as fallback
+- [x] Env vars already in `.env.example`: `RUNPOD_API_KEY`, `RUNPOD_ENDPOINT_ID`
 
 ### T10.4 — Redeploy with Real Verifier `[ ]`
 

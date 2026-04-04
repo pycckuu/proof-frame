@@ -238,9 +238,8 @@ fn main() -> Result<()> {
         .context("saving clean PNG")?;
     println!("\n   Clean PNG:  {}", clean_path.display());
 
-    // Save receipt (seal + journal) as JSON for relay
+    // Save receipt as JSON for relay (frontend-compatible format)
     let receipt_path = args.output.join("receipt.json");
-    // Encode IMAGE_ID ([u32; 8]) as hex bytes
     let image_id_bytes: Vec<u8> = proofframe_methods::PROOFFRAME_GUEST_ID
         .iter()
         .flat_map(|w| w.to_le_bytes())
