@@ -110,6 +110,12 @@ def handler(event):
             with open(receipt_path, "r") as f:
                 receipt = json.load(f)
 
+            # Include transformed image for IPFS upload
+            clean_path = os.path.join(output_dir, "clean.png")
+            if os.path.exists(clean_path):
+                with open(clean_path, "rb") as f:
+                    receipt["transformed_image_base64"] = base64.b64encode(f.read()).decode()
+
             return receipt
 
     except subprocess.TimeoutExpired:

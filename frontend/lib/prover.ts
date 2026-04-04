@@ -30,6 +30,7 @@ export type ProveResult = {
   disclosedCameraMake: string;
   imageWidth: number;
   imageHeight: number;
+  transformedImage_base64?: string;
 };
 
 export async function prove(req: ProveRequest): Promise<ProveResult> {
@@ -79,9 +80,10 @@ async function proveLocal(req: ProveRequest): Promise<ProveResult> {
       });
     });
 
-    // Read receipt
+    // Read receipt and transformed image
     const receiptRaw = await readFile(join(workdir, "receipt.json"), "utf-8");
     const receipt = JSON.parse(receiptRaw);
+    const cleanPng = await readFile(join(workdir, "clean.png")).catch(() => null);
 
     return {
       seal: `0x${receipt.receipt}`,
@@ -95,6 +97,7 @@ async function proveLocal(req: ProveRequest): Promise<ProveResult> {
       disclosedCameraMake: receipt.disclosed_camera_make || "",
       imageWidth: receipt.image_width || 0,
       imageHeight: receipt.image_height || 0,
+      transformedImage_base64: cleanPng ? cleanPng.toString("base64") : undefined,
     };
   } finally {
     await rm(workdir, { recursive: true, force: true }).catch(() => {});
@@ -169,6 +172,7 @@ async function proveRunpod(req: ProveRequest): Promise<ProveResult> {
         disclosedCameraMake: out.disclosedCameraMake || out.disclosed_camera_make || "",
         imageWidth: out.imageWidth || out.image_width || 0,
         imageHeight: out.imageHeight || out.image_height || 0,
+        transformedImage_base64: out.transformed_image_base64 || undefined,
       };
     }
 
