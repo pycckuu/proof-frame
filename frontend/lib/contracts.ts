@@ -5,7 +5,7 @@ export const SEPOLIA_CHAIN_ID = 11155111;
 
 // Deployed on Sepolia: MockVerifier (ZK) + MockWorldID (both dev mode)
 export const IMAGE_ATTESTOR_ADDRESS =
-  "0xc7B4169E2c785a5E86D8eB11F3c6D2Ef4017B330" as const;
+  "0x7Ec0Bc3Af8927dB9D31Bb23F28aE3c642C23Ed6f" as const;
 
 export const IMAGE_ATTESTOR_ABI = [
   {

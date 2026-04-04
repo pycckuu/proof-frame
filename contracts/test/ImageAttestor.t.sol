@@ -265,8 +265,8 @@ contract ImageAttestorTest is Test {
     function test_ens_subdomain_created() public {
         _attest();
         assertEq(mockNameWrapper.callCount(), 1);
-        // Label should be first 16 chars of IPFS CID
-        assertEq(keccak256(bytes(mockNameWrapper.lastLabel())), keccak256("qmtestcid1234567"));
+        // Label should be first 16 hex chars of pixel hash
+        assertEq(keccak256(bytes(mockNameWrapper.lastLabel())), keccak256("0000000000000000"));
     }
 
     function test_ens_subdomain_has_resolver() public {
@@ -276,7 +276,7 @@ contract ImageAttestorTest is Test {
         assertTrue(attestor.isVerified(PIXEL_HASH));
     }
 
-    function test_ens_fallback_to_pixelhash() public {
+    function test_ens_label_is_full_pixelhash() public {
         uint256[8] memory fakeProof;
         attestor.attestImage(
             hex"",
@@ -297,7 +297,7 @@ contract ImageAttestorTest is Test {
             fakeProof
         );
         assertEq(mockNameWrapper.callCount(), 1);
-        // Label should be hex prefix of pixel hash (no IPFS CID)
-        assertTrue(bytes(mockNameWrapper.lastLabel()).length == 16);
+        // Label should be 16 chars long
+        assertEq(bytes(mockNameWrapper.lastLabel()).length, 16);
     }
 }
