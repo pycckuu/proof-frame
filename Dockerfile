@@ -1,19 +1,26 @@
-# ProofFrame — RunPod Serverless Prover
-# Multi-stage build: compile Rust host binary, package with Python RunPod handler
+# ProofFrame — RunPod Serverless Prover (GPU / Groth16)
+# Multi-stage build: compile Rust host binary with CUDA, package with Python RunPod handler
 #
 # Build:  docker build -t ghcr.io/pycckuu/proofframe-prover:latest .
-# Test:   docker run --rm -e RISC0_DEV_MODE=1 ghcr.io/pycckuu/proofframe-prover:latest
+# Test:   docker run --rm --gpus all ghcr.io/pycckuu/proofframe-prover:latest
 # Push:   docker push ghcr.io/pycckuu/proofframe-prover:latest
 
 # ===========================================================================
-# Stage 1: Build the Rust host binary + compile guest ELF
+# Stage 1: Build the Rust host binary with CUDA support
 # ===========================================================================
-FROM rust:1.94-bookworm AS builder
+FROM nvidia/cuda:12.2.2-devel-ubuntu22.04 AS builder
 
-# Install system deps for RISC Zero + OpenSSL
+# Prevent interactive prompts during apt install
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system deps for RISC Zero + OpenSSL + Rust
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential pkg-config libssl-dev cmake git curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Install RISC Zero toolchain
 RUN curl -L https://risczero.com/install | bash \
@@ -21,6 +28,11 @@ RUN curl -L https://risczero.com/install | bash \
     && rzup install
 
 ENV PATH="/root/.risc0/bin:/root/.cargo/bin:${PATH}"
+
+# CUDA paths for compilation
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH="${CUDA_HOME}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
 
 WORKDIR /build
 
@@ -30,11 +42,11 @@ COPY common/ common/
 COPY methods/ methods/
 COPY host/ host/
 
-# Build host binary in release mode (compiles guest ELF via build.rs)
-RUN cargo build -p proofframe-host --release
+# Build host binary with CUDA feature for GPU-accelerated Groth16 proving
+RUN cargo build -p proofframe-host --release --features cuda
 
 # ===========================================================================
-# Stage 2: Runtime with Python RunPod handler
+# Stage 2: Runtime with CUDA + Python RunPod handler
 # ===========================================================================
 FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
 
