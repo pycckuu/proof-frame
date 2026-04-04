@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install RISC Zero toolchain
 RUN curl -L https://risczero.com/install | bash \
     && export PATH="$HOME/.risc0/bin:$PATH" \
-    && rzup install --version 3.0.5
+    && rzup install
 
 ENV PATH="/root/.risc0/bin:/root/.cargo/bin:${PATH}"
 
