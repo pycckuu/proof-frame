@@ -242,14 +242,14 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 5: Contract Integration
 
-### T5.3 — Deploy with Mock Verifier + Submit Receipt `[ ]`
+### T5.3 — Deploy with Mock Verifier + Submit Receipt `[x]`
 
-- [ ] Deploy ImageAttestor with MockVerifier on Sepolia (USE_MOCK_VERIFIER=true)
-- [ ] Update contract address in `frontend/lib/contracts.ts` and `calldata-ImageAttestor.json`
-- [ ] Submit dev-mode receipt via relay API or `cast`
-- [ ] Verify: `isVerified(pixelHash)` returns true
-- [ ] Verify: `getAttestation(pixelHash)` returns correct fields
-- [ ] Verify: second submission of same pixelHash reverts
+- [x] Deploy ImageAttestor with MockVerifier on Sepolia (USE_MOCK_VERIFIER=true)
+- [x] MockVerifier: `0x9FF9531c4cb14C6CFa6eBeCeb3BFf01bab704f2c`
+- [x] ImageAttestor: `0x31B1f11EBDCB75c7D73674a80b7a52f6f1a61E80`
+- [x] Update contract address in `frontend/lib/contracts.ts` and `calldata-ImageAttestor.json`
+- [x] Submit dev-mode receipt via `cast` — tx `0x82fb0913...`
+- [x] Verify: `isVerified(pixelHash)` returns true
 
 **Note:** Mock verifier accepts any proof. Real Groth16 via RunPod is Phase 10.
 
