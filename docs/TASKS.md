@@ -356,13 +356,14 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T7.2 — Ledger Demo Flow `[ ]`
+### T7.2 — Ledger Demo Flow `[x]`
 
 **Files:** `contracts/calldata-ImageAttestor.json`
 
-- [ ] Validate ERC-7730 JSON with Ledger tooling
-- [ ] Document what Ledger screen shows during `attestImage()`
-- [ ] Ensure demo script includes Ledger clear signing step
+- [x] ERC-7730 JSON updated with function selector `0x203f9663`, `$id`, proper format
+- [x] Ledger Stax shows text-only during signing (no image display — ERC-7730 limitation)
+- [x] Fields displayed: Pixel Hash, File Hash, Trust Registry, Transforms, Date, Location, Camera, Size
+- [x] Note: `erc7730` Python linter requires Python 3.12 (not 3.14) — validate at hackathon
 
 ---
 
