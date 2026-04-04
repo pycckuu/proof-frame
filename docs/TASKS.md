@@ -348,14 +348,16 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 8: Bounty Integrations
 
-### T7.1 — ENS NameStone `[ ]`
+### T7.1 — ENS NameStone + IPFS `[x]`
 
-**Files:** `frontend/app/api/relay/route.ts`
+**Files:** `frontend/app/api/relay/route.ts`, `frontend/app/attest/page.tsx`
 
-- [ ] After successful attestation tx, call NameStone API
-- [ ] Create subname: `photo-{counter}.proofframe.eth`
-- [ ] Set text records: `io.proofframe.pixelHash`, `io.proofframe.txHash`, `io.proofframe.date`
-- [ ] Return ENS name alongside tx hash in API response
+- [x] After successful attestation tx, upload clean PNG to IPFS (Infura)
+- [x] Create ENS subname via NameStone: `{ipfs-cid}.proof-frame.eth` (content-addressed)
+- [x] Set text records: pixelHash, txHash, date, location, camera, chain, contract, IPFS CID
+- [x] Return ENS name + IPFS CID alongside tx hash in API response
+- [x] Display ENS name and IPFS link in attest success state
+- [x] Graceful fallbacks: skip IPFS if no Infura key, skip ENS if no NameStone key
 
 ---
 

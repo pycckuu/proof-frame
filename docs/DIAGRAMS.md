@@ -20,7 +20,11 @@ graph TB
 
     subgraph CHAIN["⛓️ Ethereum Sepolia"]
         CONTRACT[ImageAttestor.sol<br/>Verify ZK proof<br/>Verify World ID<br/>Store attestation]
-        ENS[ENS Text Records<br/>+ NameStone Subnames<br/>photo-001.proofframe.eth]
+        ENS[ENS Text Records<br/>+ NameStone Subnames<br/>{ipfs-cid}.proof-frame.eth<br/>+ IPFS CID in text records]
+    end
+
+    subgraph STORAGE["📦 Decentralized Storage"]
+        IPFS[IPFS via Infura<br/>Clean PNG pinned<br/>ipfs://Qm...]
     end
 
     subgraph OUTPUT["📤 Published Outputs"]
@@ -35,6 +39,7 @@ graph TB
     GUEST -->|seal + journal| RELAY
     RELAY -->|attestImage tx| CONTRACT
     RELAY -->|NameStone API| ENS
+    RELAY -->|upload clean PNG| IPFS
     CONTRACT --> ATTEST
     GUEST -->|re-encode pixels| CLEAN
     ATTEST --> BADGE
@@ -43,6 +48,7 @@ graph TB
     style PROVER fill:#ede9fe,stroke:#6d28d9,color:#1a1a1a
     style RELAY fill:#fef3c7,stroke:#d97706,color:#1a1a1a
     style CHAIN fill:#dbeafe,stroke:#2563eb,color:#1a1a1a
+    style STORAGE fill:#fff7ed,stroke:#ea580c,color:#1a1a1a
     style OUTPUT fill:#d1fae5,stroke:#059669,color:#1a1a1a
 ```
 
@@ -272,37 +278,35 @@ sequenceDiagram
     participant F as 🌐 Frontend
     participant R as 📡 Relayer API
     participant C as ⛓️ Contract
+    participant I as 📦 IPFS (Infura)
     participant N as 📛 NameStone
 
     J->>F: Upload photo + config
     F->>F: Generate ZK proof locally
-    Note over F: Proof generation happens<br/>on photographer's device or<br/>ProofFrame server
+    Note over F: Proof generation happens<br/>on photographer's device or<br/>RunPod GPU (Phase 10)
 
     opt World ID enabled
         J->>F: World ID scan (QR)
         F->>F: Receive WID proof
     end
 
-    F->>R: POST {seal, journal, worldIdProof}
+    F->>R: POST {seal, journal, image_base64}
     Note over F,R: HTTPS only — photographer's<br/>wallet NEVER involved
 
     R->>C: attestImage(pixelHash, seal, ...)
     Note over R,C: msg.sender = 0xRelayer<br/>shared across ALL users
 
     C->>C: verifier.verify(seal, imageId, journalDigest)
-    Note over C: Only checks: is the<br/>ZK proof valid?
-
-    opt World ID
-        C->>C: worldId.verifyProof(root, signal, nullifier, proof)
-    end
-
     C->>C: Store attestation (NO identity)
 
-    R->>N: Create subname via API
-    Note over R,N: Project-level API key<br/>No photographer wallet
+    R->>I: Upload clean PNG
+    I->>R: IPFS CID (ipfs://Qm...)
 
-    R->>F: {txHash, ensName}
-    F->>J: Show result + clean PNG download
+    R->>N: Create subname + text records
+    Note over R,N: Text records include:<br/>pixelHash, txHash, IPFS CID,<br/>disclosed date/location/camera
+
+    R->>F: {txHash, ensName, ipfsCid}
+    F->>J: Show result + ENS name + IPFS link
 ```
 
 ---
@@ -322,9 +326,10 @@ graph TB
     end
 
     subgraph ENS_S["📛 ENS ($10K pool)"]
-        ENS_TR["Text records<br/>io.proofframe.proof<br/>io.proofframe.date"]
-        ENS_SUB["Gasless subnames<br/>photo-001.proofframe.eth<br/>via NameStone + CCIP-Read"]
-        ENS_NOTE["'Most Creative' track<br/>literally asks for<br/>'ZK proofs in text records'"]
+        ENS_TR["Text records<br/>pixelHash, txHash, date<br/>location, camera, IPFS CID"]
+        ENS_SUB["Gasless subnames<br/>{ipfs-cid}.proof-frame.eth<br/>via NameStone + CCIP-Read"]
+        ENS_IPFS["IPFS integration<br/>Clean PNG at ipfs://Qm...<br/>via Infura pinning"]
+        ENS_NOTE["'Most Creative' track<br/>ZK proofs + IPFS images<br/>in ENS text records"]
     end
 
     subgraph CL["🔗 Chainlink ($7K pool)"]
@@ -359,24 +364,28 @@ sequenceDiagram
     participant B as 🌐 Browser
     participant C as ⛓️ Contract
     participant E as 📛 ENS
+    participant I as 📦 IPFS
 
     U->>B: Upload image OR enter ENS name
 
-    alt Upload image
+    alt Upload image directly
         B->>B: Decode PNG → RGB pixels
         B->>B: SHA-256(pixels) → pixelHash
         B->>C: isVerified(pixelHash)
-    else Enter ENS name
-        B->>E: Resolve photo-001.proofframe.eth
-        E->>B: Text record: io.proofframe.proof = pixelHash
+    else Via ENS name
+        B->>E: Resolve {ipfs-cid}.proof-frame.eth
+        E->>B: Text records: pixelHash, IPFS CID
+        B->>I: Fetch image from ipfs://Qm...
+        I->>B: Clean PNG
+        B->>B: Decode → SHA-256 → pixelHash
         B->>C: isVerified(pixelHash)
     end
 
     alt Verified ✅
-        C->>B: {exists: true, timestamp, transformDesc}
+        C->>B: {exists: true}
         B->>C: getAttestation(pixelHash)
-        C->>B: {disclosedDate, disclosedLocation, disclosedCameraMake}
-        B->>U: ✅ VERIFIED<br/>Date: 2026-04-04<br/>Location: Cannes, France<br/>Transforms: crop+grayscale
+        C->>B: {date, location, camera, transforms, hashes}
+        B->>U: ✅ VERIFIED + disclosed metadata
     else Not Found ❌
         C->>B: {exists: false}
         B->>U: ❌ NO ATTESTATION FOUND

@@ -156,8 +156,10 @@ verifier.verify(seal, GUEST_IMAGE_ID, sha256(journal));
 │                    PUBLISHED OUTPUTS                          │
 │                                                             │
 │  • Clean PNG file (re-encoded from pixels, zero metadata)   │
+│  • Clean PNG pinned on IPFS (via Infura, ipfs://Qm...)      │
 │  • On-chain attestation (pixelHash → timestamp + metadata)  │
-│  • ENS subname: photo-001.proofframe.eth → proof data       │
+│  • ENS subname: {ipfs-cid}.proof-frame.eth → proof data      │
+│  •   Text records: pixelHash, txHash, date, IPFS CID        │
 │  • Disclosed metadata: date, city, camera make              │
 │                                                             │
 │  NEVER PUBLISHED:                                           │
@@ -169,12 +171,18 @@ verifier.verify(seal, GUEST_IMAGE_ID, sha256(journal));
 
 ### Verification flow (anyone can verify):
 ```
-1. Download published clean.png
-2. Decode to RGB pixels in browser (canvas → getImageData)
-3. Compute SHA-256 of pixel bytes (Web Crypto API)
-4. Query contract: isVerified(pixelHash)
+Option A: Direct upload
+1. Upload clean.png to ProofFrame verify page
+2. Browser decodes to RGB pixels (canvas → getImageData)
+3. Computes SHA-256 of pixel bytes (Web Crypto API)
+4. Queries contract: isVerified(pixelHash)
 5. If true → show disclosed metadata + verification badge
-6. If false → show "NOT VERIFIED"
+
+Option B: Via ENS
+1. Resolve {ipfs-cid}.proof-frame.eth
+2. Read text record "io.proofframe.image" → ipfs://Qm...
+3. Download image from IPFS gateway
+4. Compute pixel hash → verify on-chain (same as Option A steps 2-5)
 ```
 
 ---
@@ -708,7 +716,11 @@ WORLD_ACTION_ID=attest_image
 
 # ENS / NameStone
 NAMESTONE_API_KEY=your_key
-ENS_DOMAIN=proofframe.eth
+ENS_DOMAIN=proof-frame.eth
+
+# IPFS / Infura (optional — for pinning clean images)
+# INFURA_IPFS_PROJECT_ID=your_id
+# INFURA_IPFS_PROJECT_SECRET=your_secret
 
 # RISC Zero
 RISC0_DEV_MODE=1              # Set for dev, unset for real proofs
