@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { computePixelHash } from "@/lib/imageHash";
 import { API_BASE } from "@/lib/api";
+import { IDKitWidget, VerificationLevel, type ISuccessResult } from "@worldcoin/idkit";
 
 type Receipt = {
   seal: string;
@@ -69,6 +70,9 @@ export default function AttestPage() {
 
   const hasCrop = cropW > 0 && cropH > 0 && naturalWidth > 0 && naturalHeight > 0;
   const hasAnyTransform = grayscale || brightness !== 0 || (cropW > 0 && cropH > 0);
+
+  // World ID (required anti-Sybil)
+  const [worldIdProof, setWorldIdProof] = useState<ISuccessResult | null>(null);
 
   const handleImageFile = useCallback(async (f: File) => {
     setFile(f);
@@ -187,7 +191,13 @@ export default function AttestPage() {
       const res = await fetch(`${API_BASE}/api/relay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...receipt, image_base64 }),
+        body: JSON.stringify({
+          ...receipt,
+          image_base64,
+          worldIdRoot: worldIdProof?.merkle_root || "0",
+          worldIdNullifier: worldIdProof?.nullifier_hash || "0",
+          worldIdProof: worldIdProof?.proof || undefined,
+        }),
       });
 
       if (!res.ok) {
@@ -554,11 +564,59 @@ export default function AttestPage() {
             </div>
           </section>
 
+          {/* World ID (required — anti-Sybil) */}
+          {receipt && proveStatus === "done" && (
+            <section className="bg-surface-container-low rounded-xl p-8 border border-white/[0.02]">
+              <div className="flex items-center gap-4 mb-6">
+                <span className="material-symbols-outlined text-primary">fingerprint</span>
+                <div>
+                  <h2 className="font-label text-lg font-medium">World ID Verification</h2>
+                  <p className="text-[10px] font-label text-outline uppercase tracking-wider mt-1">
+                    Prove you are a unique human to submit attestation
+                  </p>
+                </div>
+              </div>
+
+              {!worldIdProof && (
+                <IDKitWidget
+                  app_id={(process.env.NEXT_PUBLIC_WORLD_APP_ID || "app_staging_proofframe") as `app_${string}`}
+                  action="attest"
+                  signal={receipt.pixelHash || ""}
+                  verification_level={VerificationLevel.Orb}
+                  onSuccess={(result: ISuccessResult) => setWorldIdProof(result)}
+                >
+                  {({ open }) => (
+                    <button
+                      onClick={open}
+                      className="w-full py-4 rounded-xl bg-surface-container-highest text-on-surface font-bold text-sm flex items-center justify-center gap-3 border border-outline-variant/20 hover:border-primary/40 hover:bg-surface-container transition-all"
+                    >
+                      <span className="material-symbols-outlined">person_check</span>
+                      <span>Verify with World ID</span>
+                    </button>
+                  )}
+                </IDKitWidget>
+              )}
+
+              {worldIdProof && (
+                <div className="p-4 bg-surface-container-lowest rounded-lg border border-secondary/20">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      check_circle
+                    </span>
+                    <span className="font-label text-xs text-secondary uppercase tracking-wider">
+                      World ID Verified
+                    </span>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* Submit Action */}
           <div className="pt-4">
             <button
               onClick={handleSubmit}
-              disabled={!receipt || status === "submitting"}
+              disabled={!receipt || !worldIdProof || status === "submitting"}
               className="w-full py-6 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/10 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <span>{status === "submitting" ? "Submitting to Relay..." : "Submit Attestation"}</span>

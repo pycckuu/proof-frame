@@ -421,6 +421,26 @@ T8 (Test Images) ─────────────────────
 
 ---
 
+## Phase 11: World ID Anti-Sybil Integration
+
+### T11.1 — World ID Contract + Frontend + Docs `[x]`
+
+**Files:** `contracts/src/ImageAttestor.sol`, `contracts/test/ImageAttestor.t.sol`, `contracts/script/Deploy.s.sol`, `contracts/calldata-ImageAttestor.json`, `frontend/app/attest/page.tsx`, `frontend/app/api/relay/route.ts`, `frontend/package.json`, docs
+
+- [ ] Contract: add optional World ID verification to `attestImage()` (skip if root=0)
+- [ ] Contract: add `nullifierUsed` mapping to prevent duplicate attestations per human
+- [ ] Contract tests: mock World ID verifier, test with/without World ID, duplicate nullifier
+- [ ] Deploy script: add World ID Router address to constructor
+- [ ] Frontend: add `@worldcoin/idkit` dependency
+- [ ] Frontend: IDKit widget on attest page after proof generation, before submission
+- [ ] Relay API: pass World ID params (root, nullifier, proof) to contract
+- [ ] ERC-7730: update function selector for new `attestImage()` signature
+- [ ] Docs: update ARCHITECTURE.md, DIAGRAMS.md, CLAUDE.md, TASKS.md, .env.example
+
+**Verify:** `forge build && forge test && bun run build`
+
+---
+
 ## Phase 10: Real Groth16 Proofs (RunPod Serverless)
 
 ### T10.1 — Docker Image for GPU Proving `[x]`

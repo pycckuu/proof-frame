@@ -574,14 +574,21 @@ CRE is a bolt-on enhancement that replaces hardcoded keys with TEE-fetched keys.
 **Upgrade path:** Replace hardcoded keys in host → CRE-fetched keys. Same Merkle tree,
 same guest, same contract. Zero architectural changes needed.
 
-### World ID ($20K pool — conditional)
+### World ID ($20K pool — IMPLEMENTED)
 
-**Decision point:** Talk to Mateo morning of April 3.
-**If yes (standalone IDKit):**
-- `signal = keccak256(pixelHash)` in IDKit widget
-- On-chain verification with pixel hash as signal
-- Relayer submits World ID proof alongside RISC Zero proof
-**If no (Mini Apps only):** Skip. Project is complete without it.
+**Status:** Integrated. Optional anti-Sybil verification for attestations.
+
+**How it works:**
+- IDKit widget on attest page (after ZK proof, before submission)
+- `signal = hashToField(pixelHash)` — binds human proof to this specific image
+- `action = "attest"` — one nullifier per human per action type
+- Nullifier tracking prevents duplicate attestations per World ID proof
+- World ID proof submitted BY THE RELAYER, not the photographer
+- Required: every attestation must include World ID proof
+
+**On-chain:** Contract calls `IWorldIDGroups.verifyProof()` with Sepolia Router `0x469449f251692e0779667583026b5a1e99512157`
+
+**Privacy:** World ID nullifiers are scoped to `(appId, action)` — unlinkable across attestations. No photographer identity revealed.
 
 ---
 
@@ -710,8 +717,9 @@ SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
 DEPLOYER_PRIVATE_KEY=0x...    # For contract deployment
 RELAYER_PRIVATE_KEY=0x...     # For anonymous tx submission
 
-# World ID (conditional)
+# World ID (implemented — optional anti-Sybil)
 WORLD_APP_ID=app_staging_xxxxx
+NEXT_PUBLIC_WORLD_APP_ID=app_staging_xxxxx  # Client-side for IDKit
 WORLD_ACTION_ID=attest_image
 
 # ENS / NameStone

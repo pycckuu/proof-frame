@@ -185,6 +185,6 @@ T8 (Test Images) ─────────────────────
 ## Optional Tasks (Post-MVP)
 
 - [ ] **Chainlink CRE**: Workflow to fetch camera manufacturer keys via Confidential HTTP
-- [ ] **World ID**: Uncomment contract sections, add IDKit widget to frontend
+- [x] **World ID**: Contract integration (IWorldIDGroups, optional verification, nullifier tracking), IDKit widget in frontend, relay route updated, ERC-7730 updated
 - [ ] **Real Proofs**: Generate Groth16 proofs with GPU or Boundless
 - [ ] **Demo Video**: Record 3-minute demo for ETHGlobal submission

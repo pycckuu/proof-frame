@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {IRiscZeroVerifier} from "risc0/IRiscZeroVerifier.sol";
 import {Receipt} from "risc0/IRiscZeroVerifier.sol";
+import {IWorldIDGroups} from "world-id/interfaces/IWorldIDGroups.sol";
 import {ImageAttestor} from "../src/ImageAttestor.sol";
 
 /// @notice Mock verifier that always succeeds (for testing)
@@ -12,9 +13,22 @@ contract MockVerifier is IRiscZeroVerifier {
     function verifyIntegrity(Receipt calldata) external pure {}
 }
 
+/// @notice Mock World ID that always succeeds (for testing)
+contract MockWorldID is IWorldIDGroups {
+    function verifyProof(
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        uint256[8] calldata
+    ) external pure {}
+}
+
 contract ImageAttestorTest is Test {
     ImageAttestor public attestor;
     MockVerifier public mockVerifier;
+    MockWorldID public mockWorldId;
 
     bytes32 constant IMAGE_ID = bytes32(uint256(0x1234));
     bytes32 constant PIXEL_HASH = bytes32(uint256(0xaaaa));
@@ -24,14 +38,29 @@ contract ImageAttestorTest is Test {
 
     function setUp() public {
         mockVerifier = new MockVerifier();
-        attestor = new ImageAttestor(IRiscZeroVerifier(address(mockVerifier)), IMAGE_ID);
+        mockWorldId = new MockWorldID();
+        attestor = new ImageAttestor(
+            IRiscZeroVerifier(address(mockVerifier)),
+            IMAGE_ID,
+            IWorldIDGroups(address(mockWorldId)),
+            "app_staging_proofframe",
+            "attest"
+        );
     }
 
+    uint256 nextNullifier = 1000;
+
+    /// @dev Helper to attest with auto-incrementing World ID nullifier
     function _attest() internal {
+        _attestWithPixelHash(PIXEL_HASH);
+    }
+
+    function _attestWithPixelHash(bytes32 ph) internal {
+        uint256[8] memory fakeProof;
         attestor.attestImage(
             hex"", // seal (mock verifier ignores)
             JOURNAL_DIGEST,
-            PIXEL_HASH,
+            ph,
             FILE_HASH,
             MERKLE_ROOT,
             "crop(10,10,300,220)+grayscale",
@@ -39,8 +68,32 @@ contract ImageAttestorTest is Test {
             "43.55,7.02",
             "Apple",
             640,
-            480
-        );
+            480,
+            1, // worldIdRoot (non-zero = verify)
+            nextNullifier++,
+            fakeProof
+                    );
+    }
+
+    /// @dev Helper to attest WITH World ID
+    function _attestWithWorldId(bytes32 ph, uint256 nullifier) internal {
+        uint256[8] memory fakeProof;
+        attestor.attestImage(
+            hex"",
+            JOURNAL_DIGEST,
+            ph,
+            FILE_HASH,
+            MERKLE_ROOT,
+            "crop(10,10,300,220)+grayscale",
+            "2026:04:03 17:29:53",
+            "43.55,7.02",
+            "Apple",
+            640,
+            480,
+            1, // worldIdRoot != 0 -> verify World ID
+            nullifier,
+            fakeProof
+                    );
     }
 
     function test_attestImage_stores_correctly() public {
@@ -90,6 +143,7 @@ contract ImageAttestorTest is Test {
     }
 
     function test_empty_disclosure() public {
+        uint256[8] memory fakeProof;
         attestor.attestImage(
             hex"",
             JOURNAL_DIGEST,
@@ -101,8 +155,11 @@ contract ImageAttestorTest is Test {
             "", // no location disclosed
             "", // no camera disclosed
             640,
-            480
-        );
+            480,
+            1,
+            99999, // unique nullifier
+            fakeProof
+                    );
         ImageAttestor.Attestation memory a = attestor.getAttestation(PIXEL_HASH);
         assertEq(bytes(a.disclosedDate).length, 0);
         assertEq(bytes(a.disclosedLocation).length, 0);
@@ -112,5 +169,43 @@ contract ImageAttestorTest is Test {
     function test_immutable_config() public view {
         assertEq(address(attestor.verifier()), address(mockVerifier));
         assertEq(attestor.imageId(), IMAGE_ID);
+        assertEq(address(attestor.worldId()), address(mockWorldId));
+    }
+
+    // --- World ID tests ---
+
+    function test_attestWithWorldId() public {
+        bytes32 ph = bytes32(uint256(0x1111));
+        _attestWithWorldId(ph, 42);
+
+        assertTrue(attestor.isVerified(ph));
+        ImageAttestor.Attestation memory a = attestor.getAttestation(ph);
+        assertEq(a.fileHash, FILE_HASH);
+        assertTrue(a.timestamp > 0);
+    }
+
+    function test_duplicateNullifierReverts() public {
+        bytes32 ph1 = bytes32(uint256(0x2222));
+        bytes32 ph2 = bytes32(uint256(0x3333));
+        uint256 nullifier = 12345;
+
+        // First attestation with this nullifier succeeds
+        _attestWithWorldId(ph1, nullifier);
+        assertTrue(attestor.isVerified(ph1));
+
+        // Second attestation with same nullifier reverts
+        vm.expectRevert(abi.encodeWithSelector(ImageAttestor.DuplicateNullifier.selector, nullifier));
+        _attestWithWorldId(ph2, nullifier);
+    }
+
+    function test_differentNullifiersSucceed() public {
+        bytes32 ph1 = bytes32(uint256(0x4444));
+        bytes32 ph2 = bytes32(uint256(0x5555));
+
+        _attestWithWorldId(ph1, 100);
+        _attestWithWorldId(ph2, 200);
+
+        assertTrue(attestor.isVerified(ph1));
+        assertTrue(attestor.isVerified(ph2));
     }
 }

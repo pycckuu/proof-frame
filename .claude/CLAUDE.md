@@ -14,10 +14,12 @@ Photographer's device (PRIVATE):
   4. Click "Generate Proof" → POST /api/prove
      - Dev: runs host binary with RISC0_DEV_MODE=1 (local, ~3s)
      - Prod: calls RunPod Serverless GPU (Phase 10, ~60s)
-  5. Receipt auto-loaded → click "Submit to Chain"
+  5. Receipt auto-loaded
+  6. World ID scan (IDKit QR) → required anti-Sybil proof of personhood
+  7. Click "Submit to Chain"
 
 Relayer (PUBLIC, anonymous):
-  6. Backend submits attestImage() tx from relayer wallet
+  8. Backend submits attestImage() tx from relayer wallet
   7. msg.sender = relayer address (shared, NOT photographer)
   8. Uploads clean PNG to IPFS (Infura) → ipfs://Qm...
   9. Calls NameStone API for gasless ENS subname ({ipfs-cid}.proof-frame.eth)
@@ -25,7 +27,7 @@ Relayer (PUBLIC, anonymous):
 
 On-chain (Sepolia):
   11. Verify RISC Zero Groth16 proof (~300K gas)
-  12. Optional: Verify World ID proof (~250K gas)
+  12. Optional: Verify World ID proof (~250K gas) — anti-Sybil, signal=pixelHash
   13. Store attestation keyed by pixelHash
   14. NO reference to photographer's identity anywhere
 ```
