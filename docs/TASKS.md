@@ -453,13 +453,13 @@ T8 (Test Images) ─────────────────────
 - [x] Keep manual receipt upload as fallback
 - [x] Env vars in Vercel: `RUNPOD_API_KEY`, `RUNPOD_ENDPOINT_ID`, `PROVE_PROVIDER=runpod`
 
-### T10.4 — Redeploy with Real Verifier `[ ]`
+### T10.4 — Redeploy with Real Verifier `[x]`
 
-- [ ] Get IMAGE_ID from Docker build output (compiled guest ELF hash)
-- [ ] Redeploy ImageAttestor with `USE_MOCK_VERIFIER=false` + real IMAGE_ID pointing to RISC Zero Verifier Router (`0x925d8331...`)
-- [ ] Update `frontend/lib/contracts.ts` with new contract address
-- [ ] Submit Groth16 receipt — verified by real on-chain verifier
-- [ ] Full E2E: frontend → RunPod GPU → Groth16 receipt → relay → Sepolia → verified
+- [x] IMAGE_ID: `0xde587e658c4ace1c91c6c0419dfffab48e152795e2d7979748d74eff344a198a`
+- [x] Redeployed ImageAttestor with real RISC Zero Verifier Router (`0x925d8331...`)
+- [x] New contract: `0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b`
+- [x] Updated `frontend/lib/contracts.ts` with new contract address
+- [ ] E2E test: frontend → RunPod GPU → Groth16 receipt → relay → Sepolia → verified
 
 **Cost:** ~$0.03-0.09 per proof on RTX 4090 (pay per second)
 
