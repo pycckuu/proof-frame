@@ -183,9 +183,39 @@ export default function AttestPage() {
     setError(null);
 
     try {
-      // Step 1: Sign attestation data on wallet/Ledger (Clear Signing UX)
-      // EIP-712 typed data signing triggers Ledger screen showing all fields.
-      // Signature is for UX only — NOT stored on-chain.
+      // Step 1: Upload image to IPFS (so CID is available for signing + on-chain tx)
+      let image_base64: string | undefined;
+      let uploadedIpfsCid = "";
+      if (file) {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        image_base64 = btoa(binary);
+
+        try {
+          const uploadRes = await fetch(`${API_BASE}/api/upload`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image_base64,
+              ...receipt,
+              originalPixelHash: pixelHash ? `0x${pixelHash}` : undefined,
+            }),
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            uploadedIpfsCid = uploadData.ipfsCid || "";
+          }
+        } catch {
+          // IPFS upload failed — continue without CID
+        }
+      }
+
+      // Step 2: Sign attestation data on wallet/Ledger (Clear Signing UX)
+      // Now includes IPFS CID so Ledger displays it.
       let ledgerSignature: string | undefined;
       if (isConnected) {
         try {
@@ -207,6 +237,7 @@ export default function AttestPage() {
                 { name: "disclosedCameraMake", type: "string" },
                 { name: "imageWidth", type: "uint32" },
                 { name: "imageHeight", type: "uint32" },
+                { name: "ipfsCid", type: "string" },
               ],
             },
             primaryType: "AttestImage",
@@ -220,6 +251,7 @@ export default function AttestPage() {
               disclosedCameraMake: receipt.disclosedCameraMake || "",
               imageWidth: receipt.imageWidth,
               imageHeight: receipt.imageHeight,
+              ipfsCid: uploadedIpfsCid,
             },
           });
         } catch (signErr) {
@@ -229,25 +261,13 @@ export default function AttestPage() {
         }
       }
 
-      // Step 2: Read clean image as base64 for IPFS upload
-      let image_base64: string | undefined;
-      if (file) {
-        const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        let binary = "";
-        for (let i = 0; i < bytes.length; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        image_base64 = btoa(binary);
-      }
-
-      // Step 3: Send to relay (relay broadcasts from its own wallet)
+      // Step 3: Send to relay with IPFS CID (relay broadcasts from its own wallet)
       const res = await fetch(`${API_BASE}/api/relay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...receipt,
-          image_base64,
+          ipfsCid: uploadedIpfsCid,
           originalPixelHash: pixelHash ? `0x${pixelHash}` : undefined,
           worldIdRoot: worldIdProof?.merkle_root || "0",
           worldIdNullifier: worldIdProof?.nullifier_hash || "0",

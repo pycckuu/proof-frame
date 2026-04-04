@@ -5,7 +5,7 @@ export const SEPOLIA_CHAIN_ID = 11155111;
 
 // Deployed on Sepolia: MockVerifier (ZK) + MockWorldID (both dev mode)
 export const IMAGE_ATTESTOR_ADDRESS =
-  "0x3186a0b644DE94274178a28d1BE3ebD0352eDbE6" as const;
+  "0xdc4745c89D3Fc12ba8a781727c3495791e447Ccb" as const;
 
 export const IMAGE_ATTESTOR_ABI = [
   {
@@ -23,6 +23,7 @@ export const IMAGE_ATTESTOR_ABI = [
       { name: "disclosedCameraMake", type: "string" },
       { name: "imageWidth", type: "uint32" },
       { name: "imageHeight", type: "uint32" },
+      { name: "ipfsCid", type: "string" },
       { name: "worldIdRoot", type: "uint256" },
       { name: "worldIdNullifier", type: "uint256" },
       { name: "worldIdProof", type: "uint256[8]" },
@@ -55,6 +56,7 @@ export const IMAGE_ATTESTOR_ABI = [
           { name: "disclosedCameraMake", type: "string" },
           { name: "imageWidth", type: "uint32" },
           { name: "imageHeight", type: "uint32" },
+          { name: "ipfsCid", type: "string" },
         ],
       },
     ],

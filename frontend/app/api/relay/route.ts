@@ -55,7 +55,10 @@ export async function POST(req: Request) {
       transport: http(process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org"),
     });
 
-    // 1. Submit attestation on-chain
+    // IPFS CID is provided by the client (uploaded via /api/upload before signing)
+    const ipfsCid: string | null = body.ipfsCid || null;
+
+    // 1. Submit attestation on-chain (with IPFS CID stored in contract)
     const hash = await client.writeContract({
       address: IMAGE_ATTESTOR_ADDRESS,
       abi: IMAGE_ATTESTOR_ABI,
@@ -72,6 +75,7 @@ export async function POST(req: Request) {
         body.disclosedCameraMake ?? "",
         body.imageWidth ?? 0,
         body.imageHeight ?? 0,
+        ipfsCid ?? "",
         // World ID params — randomize nullifier when using mock to avoid DuplicateNullifier
         BigInt(body.worldIdRoot || 0),
         process.env.USE_MOCK_WORLD_ID === "true"
@@ -80,55 +84,6 @@ export async function POST(req: Request) {
         decodeWorldIdProof(body.worldIdProof),
       ],
     });
-
-    // 2. Upload proof package (image + metadata) to IPFS via Infura (optional)
-    let ipfsCid: string | null = null;
-    if (body.image_base64 && process.env.INFURA_IPFS_PROJECT_ID) {
-      try {
-        const auth = Buffer.from(
-          `${process.env.INFURA_IPFS_PROJECT_ID}:${process.env.INFURA_IPFS_PROJECT_SECRET}`
-        ).toString("base64");
-
-        const metadata = {
-          version: 1,
-          pixelHash: body.pixelHash ?? "",
-          originalPixelHash: body.originalPixelHash ?? "",
-          fileHash: body.fileHash ?? "",
-          merkleRoot: body.merkleRoot ?? "",
-          txHash: hash,
-          chain: "sepolia",
-          contract: IMAGE_ATTESTOR_ADDRESS,
-          transforms: body.transformDesc || "none",
-          dimensions: { width: body.imageWidth ?? 0, height: body.imageHeight ?? 0 },
-          attestedAt: new Date().toISOString(),
-          disclosed: {
-            ...(body.disclosedDate ? { date: body.disclosedDate } : {}),
-            ...(body.disclosedLocation ? { location: body.disclosedLocation } : {}),
-            ...(body.disclosedCameraMake ? { cameraMake: body.disclosedCameraMake } : {}),
-          },
-        };
-
-        // Upload as directory: image.png + metadata.json
-        const formData = new FormData();
-        const imageBuffer = Buffer.from(body.image_base64, "base64");
-        formData.append("file", new Blob([imageBuffer], { type: "image/png" }), "image.png");
-        formData.append("file", new Blob([JSON.stringify(metadata, null, 2)], { type: "application/json" }), "metadata.json");
-
-        const ipfsRes = await fetch("https://ipfs.infura.io:5001/api/v0/add?wrap-with-directory=true", {
-          method: "POST",
-          headers: { Authorization: `Basic ${auth}` },
-          body: formData,
-        });
-
-        // Infura returns one JSON line per file + directory; last line is the root
-        const lines = (await ipfsRes.text()).trim().split("\n");
-        const entries = lines.map((l) => JSON.parse(l));
-        const root = entries.find((e) => e.Name === "");
-        ipfsCid = root?.Hash ?? entries[entries.length - 1].Hash;
-      } catch (ipfsErr) {
-        console.error("IPFS upload failed (non-fatal):", ipfsErr);
-      }
-    }
 
     // 3. Create ENS subname via NameStone (optional)
     let ensName: string | null = null;

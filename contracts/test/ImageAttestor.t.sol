@@ -68,6 +68,7 @@ contract ImageAttestorTest is Test {
             "Apple",
             640,
             480,
+            "QmTestCid123",
             1, // worldIdRoot (non-zero = verify)
             nextNullifier++,
             fakeProof
@@ -89,6 +90,7 @@ contract ImageAttestorTest is Test {
             "Apple",
             640,
             480,
+            "QmTestCid123",
             1, // worldIdRoot != 0 -> verify World ID
             nullifier,
             fakeProof
@@ -155,6 +157,7 @@ contract ImageAttestorTest is Test {
             "", // no camera disclosed
             640,
             480,
+            "", // no IPFS
             1,
             99999, // unique nullifier
             fakeProof

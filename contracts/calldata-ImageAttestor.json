@@ -6,7 +6,7 @@
       "deployments": [
         {
           "chainId": 11155111,
-          "address": "0x3186a0b644DE94274178a28d1BE3ebD0352eDbE6"
+          "address": "0xdc4745c89D3Fc12ba8a781727c3495791e447Ccb"
         }
       ],
       "abi": [
@@ -26,6 +26,7 @@
             { "name": "disclosedCameraMake", "type": "string" },
             { "name": "imageWidth", "type": "uint32" },
             { "name": "imageHeight", "type": "uint32" },
+            { "name": "ipfsCid", "type": "string" },
             { "name": "worldIdRoot", "type": "uint256" },
             { "name": "worldIdNullifier", "type": "uint256" },
             { "name": "worldIdProof", "type": "uint256[8]" }
@@ -45,7 +46,7 @@
   },
   "display": {
     "formats": {
-      "0xd747d8b5": {
+      "0xa37139df": {
         "$id": "attestImage",
         "intent": "Attest Image Authenticity",
         "fields": [
@@ -92,6 +93,11 @@
           {
             "path": "imageHeight",
             "label": "Height (px)",
+            "format": "raw"
+          },
+          {
+            "path": "ipfsCid",
+            "label": "IPFS Content ID",
             "format": "raw"
           },
           {
