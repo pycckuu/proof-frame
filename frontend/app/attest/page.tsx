@@ -635,7 +635,7 @@ export default function AttestPage() {
               {!worldIdProof && (
                 <IDKitWidget
                   app_id={(process.env.NEXT_PUBLIC_WORLD_APP_ID || "app_staging_proofframe") as `app_${string}`}
-                  action="attest"
+                  action={`attest_${receipt.pixelHash}`}
                   signal={receipt.pixelHash || ""}
                   verification_level={VerificationLevel.Orb}
                   onSuccess={(result: ISuccessResult) => setWorldIdProof(result)}
