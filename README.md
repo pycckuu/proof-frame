@@ -1,36 +1,60 @@
 # ProofFrame
 
-> **Prove your photo is real, untampered, and private.**
+> **Prove your photo is real — not AI — without revealing who you are.**
 
-AI-generated images and deepfakes are flooding the internet. Anyone can fabricate a photo of a war zone, a protest, or a politician — and there's no reliable way to tell real from fake. This is the misinformation crisis: when every image is suspect, truth loses its power.
+AI-generated images are flooding the internet. Anyone can fabricate a photo of a war zone, a protest, or a politician — and there's no reliable way to tell real from fake. This is the misinformation crisis: when every image is suspect, truth loses its power.
 
-ProofFrame fights back. It's a zero-knowledge content authenticity system that cryptographically proves an image hasn't been tampered with — while keeping the photographer anonymous. Built with RISC Zero zkVM for [ETHGlobal Cannes 2026](https://ethglobal.com/events/cannes2026).
+ProofFrame fights back. It's a zero-knowledge content authenticity system that cryptographically proves an image **came from a real camera, not an AI model** — while keeping the photographer anonymous. Built with RISC Zero zkVM for [ETHGlobal Cannes 2026](https://ethglobal.com/events/cannes2026).
 
-AI-generated images and deepfakes are the backbone of modern disinformation. C2PA camera signatures prove photos haven't been altered — but they reveal the photographer's GPS, camera serial number, and identity. Nobody will adopt a system that turns every photo into a surveillance record. ProofFrame keeps the tamper-proof guarantee while adding privacy: a ZK proof that says *"an authorized device signed this exact image, and it hasn't been modified since"* — without revealing *which device* or *who signed it*. Real proof. No surveillance. Disinformation loses.
+### Why existing solutions fail
+
+C2PA camera signatures prove photos haven't been altered — but they reveal the photographer's GPS, camera serial number, and identity. Nobody will adopt a system that turns every photo into a surveillance record. Journalists, whistleblowers, and war correspondents need privacy.
+
+### How ProofFrame solves both problems
+
+1. **Proves the image is NOT AI-generated** — a real camera's secure element signs the image at capture. The ZK proof verifies this hardware signature against a device registry of known manufacturers. No AI model can forge a valid camera signature.
+2. **Proves edits are legitimate** — crop, adjust brightness, convert to grayscale. The ZK proof guarantees these are the only changes made. No deepfakes, no pixel manipulation, no splicing.
+3. **Preserves photographer privacy** — all metadata (GPS, timestamps, device serial) is selectively disclosed or stripped entirely. The photographer's wallet never appears on-chain.
+
+*Privacy enables adoption, adoption fights fakes.*
 
 ---
 
 ## How It Works
 
 1. **Photographer uploads a photo** with all its metadata (GPS, date, camera info)
-2. A **mock signing key** creates an ECDSA signature over the file (simulates a C2PA camera signature — in production this would be the camera's own key). The signing key is in a Merkle tree of authorized signers
+2. A **camera signing key** creates an ECDSA signature over the file — this key is checked against a Merkle tree of authorized device keys (mock C2PA for hackathon; production uses real camera manufacturer keys)
 3. **Inside RISC Zero's zkVM**, the guest program:
    - Verifies the ECDSA signature is valid *(private — never leaves the VM)*
-   - Checks the signing key belongs to the authorized set *(private — only the Merkle root is revealed)*
+   - Checks the signing key belongs to the authorized device registry *(private — only the Merkle root is revealed)*
    - Decodes the PNG to raw pixels — **all metadata is discarded** because the `image` crate only outputs a pixel buffer, structurally stripping EXIF, XMP, IPTC, C2PA, and ICC data
    - Applies any transforms the photographer requested (crop, grayscale, brightness)
    - Hashes the final pixels with hardware-accelerated SHA-256
-   - Selectively reveals only the metadata fields the photographer chose (e.g. date and city-level location, but not exact GPS or camera serial number)
-4. **A relayer submits the proof on-chain** from a shared wallet — the photographer's address never appears on the blockchain
-5. **Anyone can verify:** decode any image to pixels, hash them, check if that hash has an on-chain attestation
+   - Selectively reveals only the metadata fields the photographer chose
+4. **World ID** verifies the photographer is a unique human (anti-Sybil, per-image nullifier)
+5. **Image uploaded to IPFS** — clean PNG pinned via Infura, CID available before on-chain submission
+6. **A relayer submits the proof on-chain** from a shared wallet — the photographer's address never appears on the blockchain
+7. **ENS subdomain created atomically** — `{pixelHash}.proof-frame.eth` with text records (pixelHash, fileHash, IPFS CID, transforms, metadata) set on-chain via NameWrapper + Public Resolver
+8. **Anyone can verify:** decode any image to pixels, hash them, check if that hash has an on-chain attestation
 
 **What the verifier sees:**
-> "This image's pixels hash to `0x7f3a...`. An authorized signer committed to it. It was cropped and converted to grayscale. The photo was taken on April 4, 2026 in Cannes, France."
+> "This image's pixels hash to `0x7f3a...`. An authorized device signed it. It was cropped and converted to grayscale. The photo was taken on April 4, 2026 in Cannes, France. IPFS: QmXyz..."
 
 **What the verifier does NOT see:**
-> Which signer, which camera, exact GPS, serial number, photographer name, editing history, or any metadata the photographer chose to hide.
+> Which device, which camera, exact GPS, serial number, photographer name, wallet address, editing history, or any metadata the photographer chose to hide.
 
-The `image` crate's decode-to-pixels operation is the metadata firewall — it structurally cannot preserve metadata — and the ZK proof guarantees this happened correctly without revealing the private inputs.
+---
+
+## Why It Can't Be AI
+
+AI image generators (Midjourney, DALL-E, Stable Diffusion) produce photorealistic images, but they **cannot forge a hardware camera signature**. ProofFrame's trust chain:
+
+1. **Hardware anchor** — the signing key lives in a camera's secure element (TPM/SE). No software can extract it.
+2. **Signature verification in ZK** — the guest program verifies the ECDSA signature inside the zkVM. The proof guarantees "a key from the authorized device registry signed this exact file."
+3. **Device registry** — a Merkle tree of known camera manufacturer public keys. Only real devices are in the tree.
+4. **Pixel-level integrity** — the proof covers the exact pixel content. Any modification (even a single pixel) produces a different hash.
+
+An AI model would need to compromise a camera's hardware secure element to produce a valid signature. This is the same trust model as C2PA — but with privacy.
 
 ---
 
@@ -56,7 +80,7 @@ flowchart TD
 
     subgraph ZK [" RISC Zero zkVM "]
         B1["Verify ECDSA sig"]
-        B2["Check Merkle proof"]
+        B2["Check device registry"]
         B3["Decode PNG to pixels"]
         B4["Strip all metadata"]
         B5["Crop / Gray / Brighten"]
@@ -69,26 +93,27 @@ flowchart TD
 
     subgraph OUT [" Proof Output "]
         C1([pixel_hash])
-        C2([merkle_root])
+        C2([device_registry_root])
         C3([transforms])
         C4([disclosed metadata])
     end
 
     subgraph RELAY [" Relayer API "]
-        D1["Receive seal + proof"]
+        D1["Upload to IPFS"]
         D2["Submit tx from wallet"]
-        D3["Create ENS subname"]
+        D3["ENS subname created"]
         D1 --> D2 --> D3
     end
 
     subgraph CHAIN [" ImageAttestor.sol "]
-        E1["Groth16 verify"]
+        E1["ZK proof verify"]
         E2["World ID verify"]
-        E3["Store by pixelHash"]
-        E4[("Attestation")]
+        E3["Store attestation"]
+        E5["Create ENS subdomain"]
+        E6["Set text records"]
         E1 --> E3
-        E2 -.-> E3
-        E3 --> E4
+        E2 --> E3
+        E3 --> E5 --> E6
     end
 
     subgraph VERIFY [" Anyone "]
@@ -104,7 +129,7 @@ flowchart TD
     B7 --> OUT
     OUT -- "seal + output" --> RELAY
     RELAY --> CHAIN
-    E4 -. "check" .-> F3
+    E3 -. "check" .-> F3
 
     style DEVICE fill:#1a1a2e,color:#fff
     style ZK fill:#16213e,color:#fff
@@ -114,7 +139,7 @@ flowchart TD
     style VERIFY fill:#0a6847,color:#fff
 ```
 
-> **Privacy guarantee**: the signing key, full EXIF, and raw image never leave the zkVM. The relayer's wallet appears on-chain — not the photographer's. The contract stores only the pixel hash. No identity at any layer.
+> **Privacy guarantee**: the signing key, full EXIF, and raw image never leave the zkVM. The relayer's wallet appears on-chain — not the photographer's. The contract stores only the pixel hash and IPFS CID. No identity at any layer.
 
 ---
 
@@ -125,8 +150,8 @@ The photographer's identity is hidden at **every layer**:
 | Layer | How privacy is achieved |
 |-------|------------------------|
 | **Blockchain tx** | Relayer submits from shared wallet. `msg.sender` = relayer, NOT photographer |
-| **ZK proof** | Signing key is a private input. Proof reveals only "some key in this Merkle tree" |
-| **World ID** | Nullifier hash is unlinkable across images. Proves "a unique human" not "which human" |
+| **ZK proof** | Signing key is a private input. Proof reveals only "some key in this device registry" |
+| **World ID** | Nullifier hash is per-image and unlinkable. Proves "a unique human" not "which human" |
 | **Image file** | Published PNG re-encoded from pixels. Zero metadata survives decode |
 | **ENS subnames** | Created on-chain by contract via NameWrapper. No photographer wallet involved |
 | **Network** | Photographer only talks to relayer API. Can use Tor/VPN |
@@ -137,10 +162,10 @@ The photographer chooses per-image what to reveal:
 
 | Scenario | Date | Location | Camera | Dimensions |
 |----------|------|----------|--------|------------|
-| War correspondent | ✅ | City only | ❌ | ✅ |
-| Insurance claim | ✅ | Exact GPS | ✅ | ✅ |
-| Whistleblower | ❌ | ❌ | ❌ | ❌ |
-| News agency | ✅ | Exact GPS | ✅ | ✅ |
+| War correspondent | Yes | City only | No | Yes |
+| Insurance claim | Yes | Exact GPS | Yes | Yes |
+| Whistleblower | No | No | No | No |
+| News agency | Yes | Exact GPS | Yes | Yes |
 
 Disclosed fields are **verified by the ZK proof** — they came from the signed file and cannot be forged without breaking the ECDSA signature.
 
@@ -148,11 +173,13 @@ Disclosed fields are **verified by the ZK proof** — they came from the signed 
 
 ## Trust Model
 
-| What signs | What it proves |
-|-----------|----------------|
-| Mock software key (secp256k1) | "A registered signer committed to this image" — reputation model. If a signer attests fakes, their key gets revoked from the trust registry. |
+| What signs | What it proves | Status |
+|-----------|----------------|--------|
+| Mock software key (secp256k1) | "A registered signer committed to this image" | Hackathon demo |
+| Ledger hardware key | "A hardware device approved this" — key theft resistance | Roadmap |
+| Camera factory key (Leica/Sony/Nikon) | "An authorized camera captured this" — true provenance, NOT AI | Roadmap |
 
-**Note on C2PA simulation:** The current implementation generates a fresh secp256k1 key at runtime and signs the file with raw ECDSA over SHA-256. This mocks what a C2PA-enabled camera would do — the ZK guest verifies the signature identically regardless of key origin. The pipeline is key-agnostic; only the Merkle root changes when swapping key sources.
+The same ZK pipeline works at all three levels. Only the signing key changes. AI cannot forge any of these signatures.
 
 ---
 
@@ -162,25 +189,27 @@ A single PNG from a modern camera contains dozens of identifying data points. Pr
 
 | Metadata | What it contains | Risk |
 |----------|------------------|------|
-| **EXIF** | GPS (sub-meter), camera serial, lens serial, timestamp, face data, uncropped thumbnail | 🔴 Critical |
-| **XMP** | Creator name, editing history, software paths, persistent document ID | 🔴 Critical |
-| **IPTC** | Byline, credit, contact info (address, phone, email) | 🔴 Critical |
-| **C2PA** | Full X.509 certificate chain identifying photographer/org, complete provenance | 🔴 Critical |
-| **ICC** | Color profile with device manufacturer/model signatures | 🟡 Moderate |
-| **PNG chunks** | tEXt/iTXt (AI generation parameters, XMP), eXIf, iCCP | 🟡 Moderate |
+| **EXIF** | GPS (sub-meter), camera serial, lens serial, timestamp, face data, uncropped thumbnail | Critical |
+| **XMP** | Creator name, editing history, software paths, persistent document ID | Critical |
+| **IPTC** | Byline, credit, contact info (address, phone, email) | Critical |
+| **C2PA** | Full X.509 certificate chain identifying photographer/org, complete provenance | Critical |
+| **ICC** | Color profile with device manufacturer/model signatures | Moderate |
+| **PNG chunks** | tEXt/iTXt (AI generation parameters, XMP), eXIf, iCCP | Moderate |
 
 ---
 
-## Supported Transforms
+## Verified Edits
 
-| Transform | Cycle cost (640×480) | Notes |
+Photographers can edit their images — but only with provably correct transforms:
+
+| Transform | Cycle cost (640x480) | Notes |
 |-----------|---------------------|-------|
 | **Crop** | ~700K | Cheapest — pixel copying |
 | **Grayscale** | ~1.5M | Integer weighted sum |
 | **Brightness** | ~3-5M | Clamped addition |
 | **Chain** | Sum of above | Apply multiple in sequence |
 
-The proof covers the entire transform chain: *"An authorized signer committed to an original file. When decoded and transformed with crop(10,10,300,220)+grayscale, the resulting pixels hash to X."*
+The proof covers the entire transform chain: *"An authorized device signed an original file. When decoded and transformed with crop(10,10,300,220)+grayscale, the resulting pixels hash to X."* No other changes are possible — mathematically proven.
 
 ---
 
@@ -194,35 +223,46 @@ rzup install
 # 2. Generate test images
 python3 scripts/generate-test-images.py
 
-# 3. Dev mode (instant, fake proofs — for development)
-RISC0_DEV_MODE=1 cargo run --release -- test_image.png
+# 3. Dev mode proof generation
+RISC0_DEV_MODE=1 cargo run -p proofframe-host --release -- --image test_images/ethglobal_cannes.png
 
-# 4. Real proofs (slow, GPU recommended)
-cargo run --release -- test_images/landscape_640x480.png
-
-# 5. Deploy contracts
+# 4. Deploy contracts
 cd contracts
-forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast
+forge script script/Deploy.s.sol --tc Deploy --rpc-url $SEPOLIA_RPC_URL --broadcast
 
-# 6. Run frontend
+# 5. Run frontend
 cd frontend && bun install && bun run dev
 ```
+
+**Live demo:** [proofframe.fly.dev](https://proofframe.fly.dev)
 
 ---
 
 ## Sponsor Integrations
 
-### Ledger — Hardware Trust
+### Ledger — Hardware Trust ($10K pool)
 
-EIP-712 typed data signing for `attestImage()` displays human-readable attestation fields on the Ledger screen via Clear Signing. ERC-7730 descriptor included (`calldata-ImageAttestor.json`). Positions Ledger as a content authenticity device. Wallet connection is optional — attestation works without it via anonymous relay.
+EIP-712 typed data signing for `attestImage()` displays human-readable attestation fields on the Ledger screen via Clear Signing. ERC-7730 descriptor included (`calldata-ImageAttestor.json`). Positions Ledger as a **content authenticity device** — every photographer becomes a potential Ledger customer. Wallet connection is optional — attestation works without it via anonymous relay.
 
-### ENS — Discovery Layer
+### ENS — Discovery Layer ($10K pool)
 
-On-chain subdomains via NameWrapper: `{label}.proof-frame.eth` created atomically inside `attestImage()`. Text records set on-chain via Public Resolver: `io.proofframe.pixelHash`, `fileHash`, `ipfsCid`, disclosed metadata. The bounty asks for *"store ZK proofs in text records"* — this delivers exactly that, fully on-chain.
+On-chain subdomains via NameWrapper: `{pixelHash}.proof-frame.eth` created atomically inside `attestImage()`. Text records set on-chain via Public Resolver: `url`, `avatar`, `contenthash`, `io.proofframe.pixelHash`, `fileHash`, `merkleRoot`, `ipfsCid`, `transforms`, `dimensions`, and disclosed metadata. The bounty asks for *"store ZK proofs in text records"* — this delivers exactly that, fully on-chain.
 
-### World ID — Anti-Sybil
+### World ID — Anti-Sybil ($20K pool)
 
-`signal = keccak256(pixelHash)` binds human verification to specific image content. Per-image nullifier scoping prevents the same human from attesting the same image twice. Relayer-compatible — World ID's `verifyProof` does not check `msg.sender`.
+`signal = hashToField(pixelHash)` binds human verification to specific image content. Per-image nullifier scoping: `externalNullifier = hash(appId, "attest_" + pixelHash)` — same human can attest different images but cannot attest the same image twice. Relayer-compatible — World ID's `verifyProof` does not check `msg.sender`.
+
+---
+
+## Contract Addresses (Sepolia)
+
+| Contract | Address |
+|----------|---------|
+| **ImageAttestor** (current) | `0x7Ec0Bc3Af8927dB9D31Bb23F28aE3c642C23Ed6f` |
+| RISC Zero Verifier Router | `0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187` |
+| World ID Router | `0x469449f251692e0779667583026b5a1e99512157` |
+| ENS NameWrapper | `0x0635513f179D50A207757E05759CbD106d7dFcE8` |
+| ENS Public Resolver | `0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5` |
 
 ---
 
@@ -230,11 +270,10 @@ On-chain subdomains via NameWrapper: `{label}.proof-frame.eth` created atomicall
 
 | Metric | Value |
 |--------|-------|
-| Guest cycles (640×480 PNG + crop + grayscale) | ~15-55M |
+| Guest cycles (640x480 PNG + crop + grayscale) | ~15-55M |
 | Proving time (RTX 4090) | ~30-90 seconds |
 | Proving time (dev mode) | ~2 seconds |
 | On-chain verification gas | ~300-640K |
-| On-chain verification cost (30 gwei) | ~$0.55-0.88 |
 | Groth16 proof size | ~192 bytes |
 
 ---
@@ -248,24 +287,16 @@ On-chain subdomains via NameWrapper: `{label}.proof-frame.eth` created atomicall
 | Image format | PNG only | Lossless + integer-only decode (no float-heavy JPEG DCT) |
 | Submission | Permissionless relayer | `msg.sender` irrelevant; contract checks only proof validity |
 | ENS | On-chain NameWrapper subdomains | Atomic with attestation, text records via Public Resolver |
-
----
-
-## Contract Addresses (Sepolia)
-
-| Contract | Address |
-|----------|---------|
-| RISC Zero Verifier Router | `0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187` |
-| World ID Router | `0x469449f251692e0779667583026b5a1e99512157` |
-| ENS Public Resolver | `0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5` |
+| World ID | Required, per-image nullifier | Anti-Sybil without identity linkage |
+| IPFS | Upload before tx, CID on-chain | Permanent storage, CID in contract + ENS contenthash |
 
 ---
 
 ## Why Now
 
-AI-generated fakes are eroding trust in all visual media. When every image is suspect, disinformation wins by default. **EU AI Act Article 50** mandates content provenance by **August 2, 2026** — four months from this hackathon. Penalties: up to €35 million or 7% of global annual turnover. C2PA provides camera-level signing, but its privacy model is fundamentally broken — nobody will adopt authenticity tools that double as surveillance.
+AI-generated fakes are eroding trust in all visual media. When every image is suspect, disinformation wins by default. **EU AI Act Article 50** mandates content provenance by **August 2, 2026** — four months from this hackathon. Penalties: up to 35M EUR or 7% of global annual turnover. C2PA provides camera-level signing, but its privacy model is fundamentally broken — nobody will adopt authenticity tools that double as surveillance.
 
-ProofFrame is the missing layer: proof without surveillance. Authenticity that fights disinformation without sacrificing privacy.
+ProofFrame is the missing layer: **proof without surveillance**. Authenticity that fights disinformation without sacrificing privacy. The first system that can say *"this photo came from a real camera, was edited only with these specific transforms, and a real human approved it"* — without revealing which camera, which transforms were chosen from, or which human.
 
 ---
 
@@ -275,7 +306,6 @@ ProofFrame is the missing layer: proof without surveillance. Authenticity that f
 |----------|----------|
 | [Architecture](docs/ARCHITECTURE.md) | Complete technical reference — every decision, crate version, cycle count, and pitfall |
 | [Diagrams](docs/DIAGRAMS.md) | Mermaid architecture diagrams (renders on GitHub) |
-| [Privacy Analysis](docs/PRIVACY.md) | Layer-by-layer privacy guarantees and threat model |
 | [Tasks](docs/TASKS.md) | Implementation checklist |
 
 ---
