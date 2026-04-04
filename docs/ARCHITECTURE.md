@@ -341,6 +341,7 @@ In production, these merge — the Ledger's key enters the ZK proof directly."
 | GPU (RTX 4090, CUDA) | ~30-90s | Best local option |
 | Mac M2 (Metal) | ~3-5 min | Metal acceleration since v1.0 |
 | Boundless (cloud) | ~30-120s | Decentralized proving marketplace |
+| RunPod Serverless | ~30-90s | On-demand GPU, ~$0.03-0.09/proof |
 
 ### On-chain costs
 
@@ -364,6 +365,7 @@ In production, these merge — the Ledger's key enters the ZK proof directly."
 3. **World ID toggle:** Commented sections, uncomment with 30 min work
 4. **No identity storage:** The `Attestation` struct has NO `address attester` field
 5. **Verifier delegation:** Uses `IRiscZeroVerifier` interface to the deployed router
+6. **Two-phase deployment:** Phase 1 uses MockVerifier (accepts any proof, for demo flow). Phase 2 uses real Verifier Router with Groth16 proofs via RunPod GPU.
 
 ### Contract addresses (Sepolia)
 
@@ -712,7 +714,11 @@ ENS_DOMAIN=proofframe.eth
 RISC0_DEV_MODE=1              # Set for dev, unset for real proofs
 RISC0_INFO=1                  # Show cycle counts
 
-# Boundless (remote proving)
+# RunPod Serverless (GPU proving)
+# RUNPOD_API_KEY=rp_xxxxxxxxxxxx
+# RUNPOD_ENDPOINT_ID=your-endpoint-id
+
+# Boundless (remote proving, alternative to RunPod)
 # BONSAI_API_KEY=your_key
 # BONSAI_API_URL=https://api.bonsai.xyz
 ```
@@ -727,7 +733,7 @@ RISC0_INFO=1                  # Show cycle counts
 
 3. **Journal encoding mismatch** — if the guest commits fields in order A,B,C but the contract encodes A,C,B, verification ALWAYS fails. Use identical field ordering.
 
-4. **Groth16 requires x86 + Docker** — Apple Silicon cannot generate Groth16 locally. Use Boundless for remote proving or dev-mode for the demo.
+4. **Groth16 requires x86 + GPU** — Apple Silicon cannot generate Groth16 locally. Use RunPod Serverless (RTX 4090, ~$0.03-0.09/proof) or dev-mode with MockVerifier for the demo. See `docs/TASKS.md` Phase 10.
 
 5. **PNG orientation** — the `image` crate does NOT apply EXIF Orientation tag. Photos from phones may appear rotated after decode. Accept this for hackathon.
 
