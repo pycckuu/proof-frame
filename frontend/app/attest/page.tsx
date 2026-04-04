@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { computePixelHash } from "@/lib/imageHash";
+import { API_BASE } from "@/lib/api";
 
 type Receipt = {
   seal: string;
@@ -142,7 +143,7 @@ export default function AttestPage() {
           locationPrecision === "city" ? "City" : "Country",
       };
 
-      const res = await fetch("/api/prove", {
+      const res = await fetch(`${API_BASE}/api/prove`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image_base64, transform, disclosure }),
@@ -175,10 +176,15 @@ export default function AttestPage() {
       let image_base64: string | undefined;
       if (file) {
         const buffer = await file.arrayBuffer();
-        image_base64 = Buffer.from(buffer).toString("base64");
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        image_base64 = btoa(binary);
       }
 
-      const res = await fetch("/api/relay", {
+      const res = await fetch(`${API_BASE}/api/relay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...receipt, image_base64 }),

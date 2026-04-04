@@ -2,6 +2,11 @@ import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import { IMAGE_ATTESTOR_ABI, IMAGE_ATTESTOR_ADDRESS } from "@/lib/contracts";
+import { corsHeaders, handleCors } from "@/lib/cors";
+
+export async function OPTIONS(req: Request) {
+  return handleCors(req) ?? new Response(null, { status: 204, headers: corsHeaders() });
+}
 
 function buildDescription(body: Record<string, unknown>, ipfsCid: string | null): string {
   const w = body.imageWidth ?? 0;
@@ -21,7 +26,7 @@ export async function POST(req: Request) {
     if (!privateKey) {
       return Response.json(
         { error: "Relayer not configured" },
-        { status: 500 }
+        { status: 500, headers: corsHeaders() }
       );
     }
 
@@ -167,9 +172,9 @@ export async function POST(req: Request) {
       }
     }
 
-    return Response.json({ txHash: hash, ensName, ipfsCid });
+    return Response.json({ txHash: hash, ensName, ipfsCid }, { headers: corsHeaders() });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json({ error: message }, { status: 500, headers: corsHeaders() });
   }
 }
