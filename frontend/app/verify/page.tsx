@@ -98,175 +98,318 @@ export default function VerifyPage() {
     }
   };
 
-  return (
-    <main className="min-h-screen p-8 max-w-3xl mx-auto">
-      <h1 className="text-4xl font-bold mb-2">Verify Image</h1>
-      <p className="text-gray-400 mb-8">
-        Upload an image to check if it has been authenticated on-chain.
-      </p>
+  // Upload state (no verification yet)
+  if (!preview || status === "hashing") {
+    return (
+      <main className="flex-grow flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-2xl space-y-8">
+          <div className="text-center space-y-4">
+            <h1 className="text-5xl font-extrabold tracking-tighter text-on-surface">
+              Verify <span className="text-primary">Authenticity</span>
+            </h1>
+            <p className="text-on-surface-variant text-lg font-light leading-relaxed max-w-lg mx-auto">
+              Upload an image to check if it has been authenticated on-chain via zero-knowledge proof.
+            </p>
+          </div>
 
-      {/* Drop zone */}
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
-          dragOver
-            ? "border-blue-500 bg-blue-500/10"
-            : "border-gray-700 hover:border-gray-500"
-        }`}
-      >
-        {preview ? (
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById("file-upload")?.click()}
+            className={`border-2 border-dashed rounded-xl p-16 text-center cursor-pointer transition-all ${
+              dragOver
+                ? "border-primary bg-primary/5"
+                : "border-outline-variant/30 hover:border-outline-variant/60 hover:bg-surface-container-highest"
+            }`}
+          >
+            <span className="material-symbols-outlined text-5xl text-outline mb-4 block">cloud_upload</span>
+            <p className="text-on-surface-variant font-medium mb-1">
+              Drag and drop an image here, or click to select
+            </p>
+            <p className="font-label text-[10px] text-outline uppercase tracking-widest">
+              PNG format supported
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+              }}
+              className="hidden"
+              id="file-upload"
+            />
+          </div>
+
+          {status === "hashing" && (
+            <p className="text-center text-on-surface-variant font-label text-sm uppercase tracking-widest">
+              Computing pixel hash...
+            </p>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  // Verified state
+  if (status === "verified" && attestation) {
+    return (
+      <main className="flex-grow w-full max-w-[1200px] mx-auto px-6 py-12">
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          {/* Left: Image with VERIFIED shield */}
+          <div className="w-full lg:w-3/5 space-y-8">
+            <div className="relative group">
+              {/* Verification Shield */}
+              <div className="absolute -top-6 -left-6 z-10 glass-panel border border-secondary/20 px-6 py-4 rounded-xl flex items-center gap-3 shadow-2xl">
+                <div className="bg-secondary/10 p-2 rounded-full">
+                  <span className="material-symbols-outlined text-secondary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    verified
+                  </span>
+                </div>
+                <div>
+                  <p className="font-label text-[10px] uppercase tracking-[0.2em] text-secondary/70">Status</p>
+                  <p className="font-headline font-bold text-lg text-secondary tracking-tight">VERIFIED</p>
+                </div>
+              </div>
+
+              {/* Main Image */}
+              <div className="rounded-xl overflow-hidden bg-surface-container-low aspect-[4/3] ring-1 ring-white/5 shadow-inner">
+                <img
+                  className="w-full h-full object-cover opacity-90 transition-opacity duration-700 group-hover:opacity-100"
+                  src={preview}
+                  alt="Verified image"
+                />
+              </div>
+            </div>
+
+            {/* Check again */}
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={() => {
+                  setFile(null);
+                  setPreview(null);
+                  setPixelHash(null);
+                  setAttestation(null);
+                  setStatus("idle");
+                }}
+                className="bg-gradient-to-r from-primary to-primary-container text-on-primary px-10 py-5 rounded-xl font-headline font-semibold text-lg flex items-center gap-3 shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                <span className="material-symbols-outlined">refresh</span>
+                Check Another Image
+              </button>
+            </div>
+          </div>
+
+          {/* Right: Attestation Details */}
+          <div className="w-full lg:w-2/5 space-y-6">
+            <header>
+              <h1 className="text-4xl font-headline font-extrabold tracking-tighter mb-2">Cryptographic Proof</h1>
+              <p className="text-on-surface-variant font-body">
+                Verification results for file integrity and metadata provenance.
+              </p>
+            </header>
+
+            <div className="bg-surface-container-low rounded-xl p-8 space-y-8 ring-1 ring-white/5">
+              {/* Meta Grid */}
+              <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                <MetaField label="Dimensions" value={`${attestation.imageWidth} x ${attestation.imageHeight}`} />
+                {attestation.disclosedCameraMake && (
+                  <MetaField label="Camera" value={attestation.disclosedCameraMake} />
+                )}
+                <MetaField
+                  label="Attested"
+                  value={new Date(Number(attestation.timestamp) * 1000).toLocaleString()}
+                />
+                <MetaField label="Transforms" value={attestation.transformDesc || "none"} />
+                {attestation.disclosedDate && (
+                  <MetaField label="Exif Date" value={attestation.disclosedDate} />
+                )}
+                {attestation.disclosedLocation && (
+                  <MetaField label="Location" value={attestation.disclosedLocation} />
+                )}
+              </div>
+
+              {/* Separator */}
+              <div className="h-px bg-surface-variant/20"></div>
+
+              {/* Hash Section */}
+              <div className="space-y-6">
+                <HashField icon="fingerprint" label="File Hash" value={attestation.fileHash} />
+                <HashField icon="account_tree" label="Merkle Root" value={attestation.merkleRoot} />
+              </div>
+
+              {/* Trust Badge */}
+              <div className="bg-secondary/5 border border-secondary/10 p-4 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    shield
+                  </span>
+                  <span className="font-label text-[11px] uppercase tracking-widest text-secondary/80">ZK-Verified Proof</span>
+                </div>
+                <span className="font-label text-[10px] text-on-surface-variant/40">RISC ZERO VM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Not verified state
+  if (status === "not_verified") {
+    return (
+      <main className="flex-grow flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left: Failed image */}
+          <div className="lg:col-span-7 relative">
+            <div className="bg-surface-container-low p-4 rounded-xl overflow-hidden relative group">
+              <img
+                className="w-full aspect-[4/3] object-cover rounded-lg opacity-40 grayscale filter blur-[2px]"
+                src={preview}
+                alt="Unverified image"
+              />
+              {/* NOT VERIFIED overlay */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="glass-panel px-8 py-10 rounded-xl border border-error/20 flex flex-col items-center text-center shadow-2xl">
+                  <div className="w-20 h-20 rounded-full bg-error/10 border-2 border-error flex items-center justify-center mb-6">
+                    <span className="material-symbols-outlined text-error text-5xl">close</span>
+                  </div>
+                  <div className="font-label text-error uppercase tracking-[0.2em] font-bold text-xl mb-2">NOT VERIFIED</div>
+                  <div className="font-label text-on-surface-variant text-xs opacity-60">
+                    0x{pixelHash?.slice(0, 8)}...
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Technical Readout */}
+            <div className="absolute -bottom-6 -right-4 font-label bg-surface-container-highest px-4 py-2 rounded-sm text-[10px] text-error/80 tracking-tighter border-l-2 border-error">
+              BLOCK_SCAN: NULL_RESULT // ATTESTATION_ABSENT
+            </div>
+          </div>
+
+          {/* Right: Content & Action */}
+          <div className="lg:col-span-5 flex flex-col space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-5xl font-extrabold tracking-tighter leading-tight text-on-surface">
+                Authenticity <span className="text-error">Check Failed</span>.
+              </h1>
+              <p className="text-on-surface-variant text-lg font-light leading-relaxed">
+                No on-chain attestation found for this image. The cryptographic proof required to validate the
+                origin and integrity of this file is missing or has been altered.
+              </p>
+            </div>
+
+            <div className="bg-surface-container-low p-6 rounded-xl space-y-6">
+              <div className="flex items-start gap-4">
+                <span className="material-symbols-outlined text-error mt-1">report</span>
+                <div className="flex flex-col">
+                  <span className="font-label text-[10px] uppercase text-on-surface-variant tracking-widest">Error Trace</span>
+                  <span className="font-label text-sm text-on-surface">
+                    Zero-Knowledge Verification failed to match image hash against Ethereum Sepolia state.
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setFile(null);
+                    setPreview(null);
+                    setPixelHash(null);
+                    setStatus("idle");
+                  }}
+                  className="bg-gradient-to-r from-error/20 to-error/10 text-error font-medium py-4 px-8 rounded-xl flex items-center justify-center gap-2 hover:from-error/30 transition-all active:opacity-80"
+                >
+                  <span className="material-symbols-outlined">refresh</span>
+                  Try again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Default: Image uploaded, ready to verify
+  return (
+    <main className="flex-grow flex flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-2xl space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl font-extrabold tracking-tighter text-on-surface">
+            Verify <span className="text-primary">Authenticity</span>
+          </h1>
+          <p className="text-on-surface-variant text-lg font-light leading-relaxed max-w-lg mx-auto">
+            Image loaded. Click below to check on-chain attestation.
+          </p>
+        </div>
+
+        {/* Image Preview */}
+        <div className="bg-surface-container-low p-4 rounded-xl overflow-hidden">
           <img
             src={preview}
             alt="Preview"
-            className="max-h-64 mx-auto rounded-lg mb-4"
+            className="w-full aspect-[4/3] object-cover rounded-lg"
           />
-        ) : (
-          <p className="text-gray-500 mb-4">
-            Drag and drop an image here, or click to select
-          </p>
-        )}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) handleFile(f);
-          }}
-          className="hidden"
-          id="file-upload"
-        />
-        <label
-          htmlFor="file-upload"
-          className="inline-block px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg cursor-pointer transition-colors"
-        >
-          Choose File
-        </label>
-      </div>
-
-      {/* Pixel hash display */}
-      {pixelHash && (
-        <div className="mt-6 p-4 bg-gray-900 rounded-xl border border-gray-800">
-          <p className="text-sm text-gray-400 mb-1">Pixel Hash (SHA-256)</p>
-          <p className="font-mono text-sm break-all text-gray-200">
-            0x{pixelHash}
-          </p>
         </div>
-      )}
 
-      {/* Verify button */}
-      {pixelHash && status !== "hashing" && (
+        {/* Pixel Hash */}
+        {pixelHash && (
+          <div className="bg-surface-container-lowest p-4 rounded-lg border border-white/5">
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant/60 mb-2 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[14px]">fingerprint</span>
+              Pixel Hash (SHA-256)
+            </p>
+            <code className="font-label text-xs text-primary/80 break-all leading-relaxed">
+              0x{pixelHash}
+            </code>
+          </div>
+        )}
+
+        {/* Verify Button */}
         <button
           onClick={handleVerify}
           disabled={status === "checking"}
-          className="mt-6 w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+          className="w-full py-6 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/10 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {status === "checking" ? "Checking..." : "Check Verification"}
+          <span className="material-symbols-outlined">verified_user</span>
+          <span>{status === "checking" ? "Checking..." : "Check Verification"}</span>
         </button>
-      )}
 
-      {/* Status: Hashing */}
-      {status === "hashing" && (
-        <p className="mt-6 text-gray-400">Computing pixel hash...</p>
-      )}
-
-      {/* Status: Verified */}
-      {status === "verified" && attestation && (
-        <div className="mt-6 p-6 bg-green-950 border border-green-800 rounded-xl">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">&#x2713;</span>
-            <span className="text-xl font-bold text-green-400">
-              VERIFIED
-            </span>
+        {/* Error */}
+        {status === "error" && error && (
+          <div className="p-6 bg-error-container/20 border border-error/20 rounded-xl">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-error">error</span>
+              <span className="text-error text-sm">{error}</span>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <Detail
-              label="Dimensions"
-              value={`${attestation.imageWidth} x ${attestation.imageHeight}`}
-            />
-            <Detail
-              label="Attested"
-              value={new Date(
-                Number(attestation.timestamp) * 1000
-              ).toLocaleString()}
-            />
-            {attestation.transformDesc && (
-              <Detail label="Transforms" value={attestation.transformDesc} />
-            )}
-            {attestation.disclosedDate && (
-              <Detail label="Date" value={attestation.disclosedDate} />
-            )}
-            {attestation.disclosedLocation && (
-              <Detail label="Location" value={attestation.disclosedLocation} />
-            )}
-            {attestation.disclosedCameraMake && (
-              <Detail
-                label="Camera"
-                value={attestation.disclosedCameraMake}
-              />
-            )}
-            <Detail
-              label="File Hash"
-              value={attestation.fileHash}
-              mono
-            />
-            <Detail
-              label="Merkle Root"
-              value={attestation.merkleRoot}
-              mono
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Status: Not verified */}
-      {status === "not_verified" && (
-        <div className="mt-6 p-6 bg-red-950 border border-red-800 rounded-xl">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">&#x2717;</span>
-            <span className="text-xl font-bold text-red-400">
-              NOT VERIFIED
-            </span>
-          </div>
-          <p className="mt-2 text-gray-400">
-            No on-chain attestation found for this image.
-          </p>
-        </div>
-      )}
-
-      {/* Error */}
-      {status === "error" && error && (
-        <div className="mt-6 p-4 bg-red-950 border border-red-800 rounded-xl text-red-400">
-          {error}
-        </div>
-      )}
+        )}
+      </div>
     </main>
   );
 }
 
-function Detail({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
+function MetaField({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="text-gray-500 text-xs uppercase tracking-wide">{label}</p>
-      <p
-        className={`text-gray-200 break-all ${
-          mono ? "font-mono text-xs" : ""
-        }`}
-      >
-        {value}
+    <div className="space-y-1">
+      <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant/60">{label}</p>
+      <p className="font-label text-sm text-on-surface">{value}</p>
+    </div>
+  );
+}
+
+function HashField({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <div className="space-y-2">
+      <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant/60 flex items-center gap-2">
+        <span className="material-symbols-outlined text-[14px]">{icon}</span>
+        {label}
       </p>
+      <div className="bg-surface-container-lowest p-4 rounded-lg border border-white/5">
+        <code className="font-label text-xs text-primary/80 break-all leading-relaxed">{value}</code>
+      </div>
     </div>
   );
 }
