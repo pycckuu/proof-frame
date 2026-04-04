@@ -123,6 +123,10 @@ proofframe/
     └── PRIVACY.md                  # Privacy analysis
 ```
 
+## Tooling
+
+- **Frontend package manager:** Always use `bun` (not `npm` or `yarn`). Commands: `bun install`, `bun run build`, `bun run dev`, `bun add <pkg>`.
+
 ## Common Gotchas
 
 1. **Journal encoding mismatch** — guest commits fields in order A,B,C; contract MUST encode A,B,C identically. If they differ, verification always fails.

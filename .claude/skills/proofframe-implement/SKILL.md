@@ -74,7 +74,7 @@ Act as a **Senior Tech Lead** implementing ProofFrame — a ZK content authentic
 
    **Frontend (Next.js):**
    ```bash
-   cd frontend && npm run build
+   cd frontend && bun run build
    ```
    - No wallet connection in attest flow?
    - Pixel hashing: RGBA→RGB conversion correct?
