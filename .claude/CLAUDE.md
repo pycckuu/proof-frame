@@ -168,7 +168,7 @@ E2E testing → Ledger Clear Signing → Pre-compute proofs → Demo prep
 
 ## Contract Addresses (Sepolia)
 
-- **ImageAttestor (current dev):** `0x23b36B8d7Ed0F0299dbEae8CA773b55A9e891cBF` (MockVerifier + MockWorldID, ipfsCid on-chain, per-image nullifier, on-chain ENS subdomains)
+- **ImageAttestor (current dev):** `0x7Ec0Bc3Af8927dB9D31Bb23F28aE3c642C23Ed6f` (MockVerifier + MockWorldID, ipfsCid on-chain, per-image nullifier, on-chain ENS subdomains via NameWrapper with text records)
 - **ImageAttestor (real verifier):** `0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b` (Real Verifier Router, Groth16)
 - RISC Zero Verifier Router: `0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187`
 - World ID Router: `0x469449f251692e0779667583026b5a1e99512157`

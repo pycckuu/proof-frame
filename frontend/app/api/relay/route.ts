@@ -118,10 +118,9 @@ export async function POST(req: Request) {
     });
 
     // 3. ENS subdomain is now created on-chain by the contract (via NameWrapper)
-    //    Derive the subname label to return to the frontend
+    //    Label = first 16 hex chars of pixel hash (matches contract _buildLabel)
     const domain = process.env.ENS_DOMAIN || "proof-frame.eth";
-    const hashPrefix = (body.pixelHash ?? "").replace(/^0x/, "").slice(0, 16);
-    const ensLabel = ipfsCid ? ipfsCid.slice(0, 16) : hashPrefix;
+    const ensLabel = (body.pixelHash ?? "").replace(/^0x/, "").toLowerCase().slice(0, 16);
     const ensName = `${ensLabel}.${domain}`;
 
     return Response.json({ txHash: hash, ensName, ipfsCid }, { headers: corsHeaders() });

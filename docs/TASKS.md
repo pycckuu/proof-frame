@@ -354,11 +354,11 @@ T8 (Test Images) ─────────────────────
 
 - [x] IPFS upload via `/api/upload` route (before on-chain tx, so CID available for signing + contract)
 - [x] On-chain ENS subdomain creation in `attestImage()` via NameWrapper.setSubnodeRecord()
-- [x] Text records set on-chain via PublicResolver.setText() (pixelHash, fileHash, ipfsCid)
-- [x] Label: first 16 chars of IPFS CID, fallback to pixel hash hex prefix
+- [x] Text records set on-chain via PublicResolver.setText() (pixelHash, fileHash, merkleRoot, transforms, dimensions, ipfsCid, url, avatar, contenthash, disclosed metadata)
+- [x] Label: first 16 hex chars of pixel hash (lowercase, ENS-normalized)
 - [x] Owner of proof-frame.eth grants contract operator approval (setApprovalForAll)
 - [x] Replaced off-chain NameStone/CCIP-Read with on-chain ENS — atomic with attestation
-- [x] Contract: `0x23b36B8d7Ed0F0299dbEae8CA773b55A9e891cBF`
+- [x] Contract: `0x7Ec0Bc3Af8927dB9D31Bb23F28aE3c642C23Ed6f`
 
 ### T7.3 — ENS Text Records (on-chain) `[x]`
 

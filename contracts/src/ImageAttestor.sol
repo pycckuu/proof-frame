@@ -223,24 +223,16 @@ contract ImageAttestor {
         return uint256(keccak256(value)) >> 8;
     }
 
-    /// @dev Build ENS label from IPFS CID (first 16 chars) or pixel hash prefix
-    ///      Always lowercased — ENS normalizes labels to lowercase (UTS-46)
-    function _buildLabel(string calldata ipfsCid, bytes32 pixelHash) internal pure returns (string memory) {
-        if (bytes(ipfsCid).length >= 16) {
-            bytes memory label = new bytes(16);
-            for (uint i = 0; i < 16; i++) {
-                label[i] = _toLower(bytes(ipfsCid)[i]);
-            }
-            return string(label);
+    /// @dev Build ENS label: first 16 hex chars of pixel hash (8 bytes, lowercase)
+    ///      e.g. "f64490cd5c9a2c47"
+    function _buildLabel(string calldata, bytes32 pixelHash) internal pure returns (string memory) {
+        bytes memory hexChars = "0123456789abcdef";
+        bytes memory label = new bytes(16);
+        for (uint i = 0; i < 8; i++) {
+            label[i * 2] = hexChars[uint8(pixelHash[i]) >> 4];
+            label[i * 2 + 1] = hexChars[uint8(pixelHash[i]) & 0x0f];
         }
-        // Fallback: first 16 hex chars of pixel hash (already lowercase)
-        return _bytes32ToHex16(pixelHash);
-    }
-
-    /// @dev Convert ASCII uppercase to lowercase
-    function _toLower(bytes1 b) internal pure returns (bytes1) {
-        if (b >= 0x41 && b <= 0x5A) return bytes1(uint8(b) + 32);
-        return b;
+        return string(label);
     }
 
     /// @dev Convert bytes32 to full hex string (without 0x prefix)
@@ -256,16 +248,6 @@ contract ImageAttestor {
         return string(result);
     }
 
-    /// @dev Convert first 8 bytes of bytes32 to 16-char hex string
-    function _bytes32ToHex16(bytes32 data) internal pure returns (string memory) {
-        bytes memory hexChars = "0123456789abcdef";
-        bytes memory result = new bytes(16);
-        for (uint i = 0; i < 8; i++) {
-            result[i * 2] = hexChars[uint8(data[i]) >> 4];
-            result[i * 2 + 1] = hexChars[uint8(data[i]) & 0x0f];
-        }
-        return string(result);
-    }
 
     /// @dev Convert uint32 to decimal string
     function _uint32ToString(uint32 value) internal pure returns (string memory) {
