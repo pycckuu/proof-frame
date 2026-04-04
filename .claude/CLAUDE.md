@@ -166,8 +166,8 @@ E2E testing → Ledger Clear Signing → Pre-compute proofs → Demo prep
 
 ## Contract Addresses (Sepolia)
 
-- **ImageAttestor:** `0x31B1f11EBDCB75c7D73674a80b7a52f6f1a61E80` (MockVerifier, dev mode)
-- **MockVerifier:** `0x9FF9531c4cb14C6CFa6eBeCeb3BFf01bab704f2c`
+- **ImageAttestor:** `0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b` (Real Verifier Router, Groth16)
+- **ImageAttestor (legacy/dev):** `0x31B1f11EBDCB75c7D73674a80b7a52f6f1a61E80` (MockVerifier)
 - RISC Zero Verifier Router: `0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187`
 - World ID Router: `0x469449f251692e0779667583026b5a1e99512157`
 - ENS Public Resolver: `0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5`

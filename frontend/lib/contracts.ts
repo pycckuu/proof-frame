@@ -3,9 +3,9 @@ import { sepolia } from "viem/chains";
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 
-// Deployed on Sepolia with MockVerifier (dev mode)
+// Deployed on Sepolia with real RISC Zero Verifier Router (Groth16)
 export const IMAGE_ATTESTOR_ADDRESS =
-  "0x31B1f11EBDCB75c7D73674a80b7a52f6f1a61E80" as const;
+  "0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b" as const;
 
 export const IMAGE_ATTESTOR_ABI = [
   {
