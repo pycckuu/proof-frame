@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { computePixelHash } from "@/lib/imageHash";
 
 type Receipt = {
@@ -32,6 +32,10 @@ export default function AttestPage() {
   const [grayscale, setGrayscale] = useState(false);
   const [brightness, setBrightness] = useState(0);
 
+  // Image natural dimensions (for crop overlay positioning)
+  const [naturalWidth, setNaturalWidth] = useState(0);
+  const [naturalHeight, setNaturalHeight] = useState(0);
+
   // Disclosure policy
   const [revealDate, setRevealDate] = useState(false);
   const [revealLocation, setRevealLocation] = useState(false);
@@ -52,9 +56,24 @@ export default function AttestPage() {
   const [error, setError] = useState<string | null>(null);
   const [showManualUpload, setShowManualUpload] = useState(false);
 
+  // CSS filter string for live preview of grayscale + brightness
+  const previewFilter = useMemo(() => {
+    const parts: string[] = [];
+    if (grayscale) parts.push("grayscale(1)");
+    if (brightness !== 0) {
+      parts.push(`brightness(${(brightness + 100) / 100})`);
+    }
+    return parts.length > 0 ? parts.join(" ") : undefined;
+  }, [grayscale, brightness]);
+
+  const hasCrop = cropW > 0 && cropH > 0 && naturalWidth > 0 && naturalHeight > 0;
+  const hasAnyTransform = grayscale || brightness !== 0 || (cropW > 0 && cropH > 0);
+
   const handleImageFile = useCallback(async (f: File) => {
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setNaturalWidth(0);
+    setNaturalHeight(0);
     try {
       const hash = await computePixelHash(f);
       setPixelHash(hash);
@@ -216,8 +235,68 @@ export default function AttestPage() {
                     <img
                       src={preview}
                       alt="Preview"
-                      className="absolute inset-0 w-full h-full object-cover opacity-90"
+                      className={`absolute inset-0 w-full h-full opacity-90 ${hasAnyTransform ? "object-contain" : "object-cover"}`}
+                      style={previewFilter ? { filter: previewFilter } : undefined}
+                      onLoad={(e) => {
+                        const img = e.currentTarget;
+                        setNaturalWidth(img.naturalWidth);
+                        setNaturalHeight(img.naturalHeight);
+                      }}
                     />
+                    {hasCrop && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        {/* Top strip */}
+                        <div
+                          className="absolute bg-black/60"
+                          style={{
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: `${(cropY / naturalHeight) * 100}%`,
+                          }}
+                        />
+                        {/* Bottom strip */}
+                        <div
+                          className="absolute bg-black/60"
+                          style={{
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: `${(Math.max(0, naturalHeight - cropY - cropH) / naturalHeight) * 100}%`,
+                          }}
+                        />
+                        {/* Left strip */}
+                        <div
+                          className="absolute bg-black/60"
+                          style={{
+                            top: `${(cropY / naturalHeight) * 100}%`,
+                            left: 0,
+                            width: `${(cropX / naturalWidth) * 100}%`,
+                            height: `${(cropH / naturalHeight) * 100}%`,
+                          }}
+                        />
+                        {/* Right strip */}
+                        <div
+                          className="absolute bg-black/60"
+                          style={{
+                            top: `${(cropY / naturalHeight) * 100}%`,
+                            right: 0,
+                            width: `${(Math.max(0, naturalWidth - cropX - cropW) / naturalWidth) * 100}%`,
+                            height: `${(cropH / naturalHeight) * 100}%`,
+                          }}
+                        />
+                        {/* Crop border */}
+                        <div
+                          className="absolute border-2 border-primary/80 rounded-sm"
+                          style={{
+                            top: `${(cropY / naturalHeight) * 100}%`,
+                            left: `${(cropX / naturalWidth) * 100}%`,
+                            width: `${(cropW / naturalWidth) * 100}%`,
+                            height: `${(cropH / naturalHeight) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    )}
                     {pixelHash && (
                       <div className="absolute top-4 right-4 glass-panel px-4 py-2 rounded-lg border border-white/5 flex items-center gap-3">
                         <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
