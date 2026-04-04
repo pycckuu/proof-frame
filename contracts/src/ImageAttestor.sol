@@ -28,8 +28,8 @@ contract ImageAttestor {
 
     /// @notice The World ID router contract (optional — address(0) disables)
     IWorldIDGroups public immutable worldId;
-    /// @notice Pre-computed external nullifier hash for World ID
-    uint256 internal immutable externalNullifier;
+    /// @notice Pre-computed app ID hash for World ID external nullifier
+    uint256 internal immutable appIdHash;
     /// @notice World ID group ID (1 = Orb-verified)
     uint256 internal immutable groupId = 1;
 
@@ -53,15 +53,12 @@ contract ImageAttestor {
         IRiscZeroVerifier _verifier,
         bytes32 _imageId,
         IWorldIDGroups _worldId,
-        string memory _appId,
-        string memory _action
+        string memory _appId
     ) {
         verifier = _verifier;
         imageId = _imageId;
         worldId = _worldId;
-        externalNullifier = hashToField(
-            abi.encodePacked(hashToField(abi.encodePacked(_appId)), _action)
-        );
+        appIdHash = hashToField(abi.encodePacked(_appId));
     }
 
     /// @notice Attest an image by verifying its ZK proof and storing the attestation.
@@ -89,17 +86,21 @@ contract ImageAttestor {
         verifier.verify(seal, imageId, journalDigest);
 
         // 2. Verify World ID — every attestation requires proof of unique human
+        //    Nullifier is scoped per-image: same human can attest different images,
+        //    but cannot attest the same image twice.
+        //    externalNullifier = hash(appIdHash, "attest_" + pixelHash)
         if (nullifierUsed[worldIdNullifier]) {
             revert DuplicateNullifier(worldIdNullifier);
         }
-        // IDKit hashes hex signal as raw bytes: keccak256(bytes32) >> 8
-        // This matches abi.encodePacked(bytes32).hashToField()
+        uint256 perImageNullifier = hashToField(
+            abi.encodePacked(appIdHash, "attest_", pixelHash)
+        );
         worldId.verifyProof(
             worldIdRoot,
             groupId,
             hashToField(abi.encodePacked(pixelHash)),
             worldIdNullifier,
-            externalNullifier,
+            perImageNullifier,
             worldIdProof
         );
         nullifierUsed[worldIdNullifier] = true;

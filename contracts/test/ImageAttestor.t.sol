@@ -43,8 +43,7 @@ contract ImageAttestorTest is Test {
             IRiscZeroVerifier(address(mockVerifier)),
             IMAGE_ID,
             IWorldIDGroups(address(mockWorldId)),
-            "app_staging_proofframe",
-            "attest"
+            "app_staging_proofframe"
         );
     }
 

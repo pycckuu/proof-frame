@@ -41,7 +41,6 @@ contract Deploy is Script {
 
         // World ID configuration
         string memory worldAppId = vm.envOr("WORLD_APP_ID", string("app_staging_proofframe"));
-        string memory worldActionId = vm.envOr("WORLD_ACTION_ID", string("attest"));
 
         vm.startBroadcast(deployerKey);
 
@@ -67,8 +66,7 @@ contract Deploy is Script {
             IRiscZeroVerifier(verifierAddr),
             imageId,
             IWorldIDGroups(worldIdAddr),
-            worldAppId,
-            worldActionId
+            worldAppId
         );
 
         vm.stopBroadcast();
