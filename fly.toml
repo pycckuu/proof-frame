@@ -1,0 +1,23 @@
+app = "proofframe"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile.fly"
+
+[env]
+  PORT = "3000"
+  RISC0_DEV_MODE = "1"
+  PROVE_PROVIDER = "local"
+  PROOFFRAME_HOST_BIN = "/usr/local/bin/proofframe-host"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 2

@@ -498,11 +498,16 @@ T8 (Test Images) ─────────────────────
 - [x] Add CORS headers + OPTIONS handler to `/api/prove` and `/api/relay`
 - [x] Verify: `bun run build` (normal) and `STATIC_EXPORT=true bun run build` (static) both pass
 
-### T11.2 — Deploy to Vercel `[ ]`
+### T11.2 — Deploy to Fly.io `[x]`
 
-- [ ] Deploy Next.js app to Vercel (`bunx vercel --prod`)
-- [ ] Set env vars in Vercel dashboard (RELAYER_PRIVATE_KEY, NAMESTONE_API_KEY, INFURA_*, etc.)
-- [ ] Verify API routes work on Vercel URL
+**Files:** `Dockerfile.fly` (new), `fly.toml` (new), `.dockerignore`
+
+- [x] 3-stage Dockerfile: Rust binary (rust:1.88 + RISC Zero) → Next.js (bun) → slim runtime (node:20-slim)
+- [x] `fly.toml`: 2 shared CPUs, 1GB RAM, Paris region (cdg), auto-stop/start
+- [x] Secrets imported: RELAYER_PRIVATE_KEY, SEPOLIA_RPC_URL, NAMESTONE_API_KEY, INFURA_*, WORLD_APP_ID
+- [x] `.dockerignore` updated: include `frontend/` for Fly build
+- [x] Dev mode proof generation via `proofframe-host` binary with `RISC0_DEV_MODE=1`
+- [x] URL: `https://proofframe.fly.dev`
 
 ### T11.3 — Upload to IPFS + Set ENS Contenthash `[ ]`
 
