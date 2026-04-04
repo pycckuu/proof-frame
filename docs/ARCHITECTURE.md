@@ -76,7 +76,7 @@ verifier.verify(seal, GUEST_IMAGE_ID, sha256(journal));
 │  2. Open ProofFrame web app                                 │
 │  3. Choose disclosure: ☑ date ☑ city-location ☐ camera      │
 │  4. Choose transforms: crop(10,10,300,220) + grayscale      │
-│  5. [Optional] World ID scan → proof with signal=pixelHash  │
+│  5. World ID scan → proof with signal=pixelHash (required)   │
 │  6. App sends image to proof generation service              │
 └──────────────────┬──────────────────────────────────────────┘
                    │ HTTPS (image bytes + config)
@@ -263,9 +263,10 @@ doesn't reference any submitter identity.
 **Problem:** World ID adds anti-Sybil (one human can't create 1000 fake identities), but
 the World team may require Mini Apps (MiniKit) instead of standalone IDKit for the bounty.
 
-**Decision:** World ID sections in the contract are commented out. Uncomment in 30 minutes
-if confirmed. The guest program and host don't change — World ID is purely a contract +
-frontend addition.
+**Status: IMPLEMENTED.** World ID verification is required for every attestation. Per-image
+nullifier scoping: `externalNullifier = hash(appIdHash, "attest_" + pixelHash)` — same human
+can attest different images but cannot attest the same image twice. MockWorldID used on Sepolia,
+real World ID on mainnet/World Chain.
 
 **Signal binding:** `signal = keccak256(pixelHash)` — binds human verification to specific
 image content. A World ID proof for image A can't be reused for image B.
@@ -379,7 +380,7 @@ In production, these merge — the Ledger's key enters the ZK proof directly."
 
 1. **Permissionless:** No `onlyOwner`, no access control, no `msg.sender` checks
 2. **Idempotent:** Each pixelHash can only be attested once (`AlreadyAttested` error)
-3. **World ID toggle:** Commented sections, uncomment with 30 min work
+3. **World ID:** Required — per-image nullifier, anti-Sybil verification
 4. **No identity storage:** The `Attestation` struct has NO `address attester` field
 5. **Verifier delegation:** Uses `IRiscZeroVerifier` interface to the deployed router
 6. **Two-phase deployment:** Phase 1 uses MockVerifier (accepts any proof, for demo flow). Phase 2 uses real Verifier Router with Groth16 proofs via RunPod GPU.
@@ -387,6 +388,8 @@ In production, these merge — the Ledger's key enters the ZK proof directly."
 ### Contract addresses (Sepolia)
 
 ```
+ImageAttestor (current):   0xdc4745c89D3Fc12ba8a781727c3495791e447Ccb  (MockVerifier + MockWorldID, ipfsCid, per-image nullifier)
+ImageAttestor (real ZK):   0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b  (Real Verifier Router, Groth16)
 RISC Zero Verifier Router: 0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187
 World ID Router:           0x469449f251692e0779667583026b5a1e99512157
 ENS Public Resolver:       0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5
