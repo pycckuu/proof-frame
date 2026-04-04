@@ -27,6 +27,9 @@ COPY host/ host/
 
 RUN cargo build -p proofframe-host --release
 
+# Find r0vm location for runtime (needed for dev mode proving)
+RUN cp $(which r0vm) /build/r0vm
+
 # ===========================================================================
 # Stage 2: Build Next.js frontend
 # ===========================================================================
@@ -50,8 +53,9 @@ RUN npm install -g bun
 
 WORKDIR /app
 
-# Rust binary
+# Rust binary + RISC Zero r0vm (needed for dev mode proving at runtime)
 COPY --from=rust-builder /build/target/release/proofframe-host /usr/local/bin/proofframe-host
+COPY --from=rust-builder /build/r0vm /usr/local/bin/r0vm
 
 # Next.js standalone build
 COPY --from=node-builder /app/frontend/.next .next/

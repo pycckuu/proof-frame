@@ -147,6 +147,7 @@ export async function POST(req: Request) {
 
           // ProofFrame core attestation data
           "io.proofframe.pixelHash": body.pixelHash ?? "",
+          ...(body.originalPixelHash ? { "io.proofframe.originalPixelHash": body.originalPixelHash } : {}),
           "io.proofframe.fileHash": body.fileHash ?? "",
           "io.proofframe.merkleRoot": body.merkleRoot ?? "",
           "io.proofframe.txHash": hash,
