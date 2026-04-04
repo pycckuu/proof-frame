@@ -392,6 +392,25 @@ T8 (Test Images) ─────────────────────
 
 ---
 
+## Phase 9.5: Server-Side Proof Generation
+
+### T9.5 — `/api/prove` with Provider Abstraction `[x]`
+
+**Files:** `frontend/lib/prover.ts` (new), `frontend/app/api/prove/route.ts` (new), `frontend/app/attest/page.tsx`, `host/src/main.rs`
+
+- [ ] Create `lib/prover.ts` with provider abstraction: `prove(req) → ProveResult`
+- [ ] Local provider: runs host binary via `execFile` with `RISC0_DEV_MODE=1`
+- [ ] RunPod provider: placeholder for Phase 10
+- [ ] `/api/prove` POST route: accepts image_base64 + transform + disclosure
+- [ ] Enhance host receipt output: add merkleRoot, disclosed fields, journalDigest
+- [ ] Attest page: "Generate Proof" button replaces receipt upload, auto-populates receipt
+- [ ] Keep manual receipt upload as collapsible fallback
+- [ ] Env vars: `PROVE_PROVIDER=local`, `PROOFFRAME_HOST_BIN=path/to/binary`
+
+**Verify:** `bun run build && curl -X POST /api/prove with test image`
+
+---
+
 ## Phase 10: Real Groth16 Proofs (RunPod Serverless)
 
 ### T10.1 — Docker Image for GPU Proving `[ ]`

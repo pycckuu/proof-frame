@@ -41,12 +41,16 @@ export default function AttestPage() {
   // Receipt
   const [receipt, setReceipt] = useState<Receipt | null>(null);
 
+  // Proving
+  const [proveStatus, setProveStatus] = useState<"idle" | "proving" | "done" | "error">("idle");
+
   // Submission
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [txHash, setTxHash] = useState<string | null>(null);
   const [ensName, setEnsName] = useState<string | null>(null);
   const [ipfsCid, setIpfsCid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showManualUpload, setShowManualUpload] = useState(false);
 
   const handleImageFile = useCallback(async (f: File) => {
     setFile(f);
@@ -77,9 +81,71 @@ export default function AttestPage() {
     []
   );
 
+  const handleGenerateProof = async () => {
+    if (!file) {
+      setError("Please upload an image first");
+      return;
+    }
+    setProveStatus("proving");
+    setError(null);
+    setReceipt(null);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const image_base64 = btoa(binary);
+
+      // Build transform from UI state
+      let transform = '"None"';
+      const transforms: string[] = [];
+      if (cropW > 0 && cropH > 0) {
+        transforms.push(`{"Crop":{"x":${cropX},"y":${cropY},"width":${cropW},"height":${cropH}}}`);
+      }
+      if (grayscale) transforms.push('"Grayscale"');
+      if (brightness !== 0) transforms.push(`{"Brighten":{"value":${brightness}}}`);
+
+      if (transforms.length === 1) {
+        transform = transforms[0];
+      } else if (transforms.length > 1) {
+        transform = `{"Chain":[${transforms.join(",")}]}`;
+      }
+
+      const disclosure = {
+        reveal_date: revealDate,
+        reveal_location: revealLocation,
+        reveal_camera_make: revealCamera,
+        location_precision: locationPrecision === "hidden" ? "Hidden" :
+          locationPrecision === "exact" ? "Exact" :
+          locationPrecision === "city" ? "City" : "Country",
+      };
+
+      const res = await fetch("/api/prove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_base64, transform, disclosure }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Proof generation failed: ${res.status}`);
+      }
+
+      const result = await res.json();
+      setReceipt(result);
+      setProveStatus("done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Proof generation failed");
+      setProveStatus("error");
+    }
+  };
+
   const handleSubmit = async () => {
     if (!receipt) {
-      setError("Please upload a receipt JSON from the host CLI");
+      setError("Please generate a proof first");
       return;
     }
     setStatus("submitting");
@@ -324,38 +390,46 @@ export default function AttestPage() {
             </div>
           </section>
 
-          {/* Receipt Upload */}
+          {/* Generate Proof */}
           <section className="bg-surface-container-low rounded-xl p-8">
             <div className="flex items-center gap-4 mb-6">
-              <span className="material-symbols-outlined text-primary">data_object</span>
-              <h2 className="font-label text-lg font-medium">ZK Proof Receipt</h2>
+              <span className="material-symbols-outlined text-primary">shield</span>
+              <h2 className="font-label text-lg font-medium">ZK Proof</h2>
             </div>
-            <div
-              className="border-2 border-dashed border-outline-variant/20 rounded-xl p-8 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-surface-container-highest transition-all"
-              onClick={() => document.getElementById("receipt-upload")?.click()}
+
+            {/* Generate Proof Button */}
+            <button
+              onClick={handleGenerateProof}
+              disabled={!file || proveStatus === "proving"}
+              className="w-full py-5 rounded-xl bg-surface-container-highest text-on-surface font-bold text-base flex items-center justify-center gap-3 border border-outline-variant/20 hover:border-primary/40 hover:bg-surface-container transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <span className="material-symbols-outlined text-3xl text-outline mb-3 group-hover:text-primary transition-colors">
-                upload_file
-              </span>
-              <p className="text-sm text-on-surface-variant mb-1 font-medium">Upload Receipt JSON</p>
-              <p className="text-[10px] font-label text-outline uppercase tracking-widest">
-                risc zero guest execution receipt
+              {proveStatus === "proving" ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  <span>Generating ZK Proof...</span>
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined">bolt</span>
+                  <span>Generate Proof</span>
+                </>
+              )}
+            </button>
+
+            {proveStatus === "proving" && (
+              <p className="text-center mt-3 text-[10px] font-label text-outline uppercase tracking-widest">
+                Running RISC Zero zkVM · ~3 seconds in dev mode
               </p>
-            </div>
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleReceiptUpload}
-              className="hidden"
-              id="receipt-upload"
-            />
-            {receipt && (
+            )}
+
+            {/* Proof Result */}
+            {receipt && proveStatus === "done" && (
               <div className="mt-4 p-4 bg-surface-container-lowest rounded-lg border border-secondary/20">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
                     check_circle
                   </span>
-                  <span className="font-label text-xs text-secondary uppercase tracking-wider">Receipt Loaded</span>
+                  <span className="font-label text-xs text-secondary uppercase tracking-wider">Proof Generated</span>
                 </div>
                 <div className="space-y-1 font-label text-xs text-on-surface-variant">
                   <p>pixelHash: {receipt.pixelHash}</p>
@@ -365,6 +439,34 @@ export default function AttestPage() {
                 </div>
               </div>
             )}
+
+            {/* Manual upload fallback */}
+            <div className="mt-4">
+              <button
+                onClick={() => setShowManualUpload(!showManualUpload)}
+                className="text-[10px] font-label text-outline uppercase tracking-widest hover:text-on-surface-variant transition-colors"
+              >
+                {showManualUpload ? "Hide" : "Or upload receipt manually"}
+              </button>
+              {showManualUpload && (
+                <div className="mt-3">
+                  <div
+                    className="border border-dashed border-outline-variant/20 rounded-lg p-4 flex flex-col items-center text-center cursor-pointer hover:bg-surface-container-highest transition-all"
+                    onClick={() => document.getElementById("receipt-upload")?.click()}
+                  >
+                    <span className="material-symbols-outlined text-xl text-outline mb-1">upload_file</span>
+                    <p className="text-[10px] font-label text-outline">Upload Receipt JSON</p>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleReceiptUpload}
+                    className="hidden"
+                    id="receipt-upload"
+                  />
+                </div>
+              )}
+            </div>
           </section>
 
           {/* Submit Action */}
@@ -404,9 +506,14 @@ export default function AttestPage() {
                   TX: {txHash}
                 </a>
                 {ensName && (
-                  <p className="font-label text-xs text-on-surface-variant">
-                    ENS: <span className="text-secondary font-medium">{ensName}</span>
-                  </p>
+                  <a
+                    href={`https://app.ens.domains/${ensName}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-label text-xs text-secondary hover:underline block"
+                  >
+                    ENS: {ensName}
+                  </a>
                 )}
                 {ipfsCid && (
                   <a

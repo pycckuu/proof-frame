@@ -9,10 +9,12 @@
 ```
 Photographer's device (PRIVATE):
   1. Take photo → file.png (with EXIF: GPS, date, camera)
-  2. Content signing key signs SHA-256(file_bytes) — raw ECDSA, no Ethereum prefix
-  3. Optional: World ID scan → proof with signal=pixelHash
-  4. RISC Zero generates ZK proof (signature + key = private inputs)
-  5. Sends {seal, journal, worldIdProof} to relayer API
+  2. Upload to ProofFrame web app
+  3. Configure transforms + disclosure policy
+  4. Click "Generate Proof" → POST /api/prove
+     - Dev: runs host binary with RISC0_DEV_MODE=1 (local, ~3s)
+     - Prod: calls RunPod Serverless GPU (Phase 10, ~60s)
+  5. Receipt auto-loaded → click "Submit to Chain"
 
 Relayer (PUBLIC, anonymous):
   6. Backend submits attestImage() tx from relayer wallet

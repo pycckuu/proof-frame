@@ -104,9 +104,13 @@ Output a single actionable plan:
    - What logic moves to `common/` for native testing
    - Specific test cases to write (happy path, edge cases, error cases)
    - Run: `cargo test -p proofframe-common`
-5. **Acceptance Criteria**:
+5. **Documentation Updates**: List which docs need updating:
+   - `docs/TASKS.md`, `docs/ARCHITECTURE.md`, `docs/DIAGRAMS.md`
+   - `.claude/CLAUDE.md`, `.env.example`
+6. **Acceptance Criteria**:
    - ZK: `cargo build -p proofframe-methods` + `cargo test -p proofframe-common`
    - Contracts: `forge build && forge test`
    - Frontend: `bun run build`
    - Privacy: no identity leaks at any layer
-6. **Risks & Mitigations**
+   - Docs: all affected docs updated
+7. **Risks & Mitigations**

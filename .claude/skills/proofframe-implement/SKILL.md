@@ -100,11 +100,23 @@ Before committing, verify ALL of these:
 - [ ] Re-encoded PNG has zero metadata (decoded from pixels only)
 - [ ] No EXIF/XMP/IPTC/C2PA data in any output
 
-### Phase 4: Documentation
+### Phase 4: Documentation (MANDATORY)
+
+Verify ALL relevant docs are updated before committing. Do NOT skip this step.
 
 1. **Update Task Status**: Mark task as complete in `docs/TASKS.md`.
-2. **Update Architecture**: If any architectural decision changed, update `docs/ARCHITECTURE.md`.
-3. **Update README**: If public API or usage changed, update `README.md`.
+2. **Update Architecture**: If any architectural decision, data flow, or system component changed, update `docs/ARCHITECTURE.md`.
+3. **Update Diagrams**: If system flow, verification path, or component interactions changed, update `docs/DIAGRAMS.md`.
+4. **Update CLAUDE.md**: If the core architecture flow changed (new API routes, new integrations), update `.claude/CLAUDE.md`.
+5. **Update .env.example**: If new env vars were added, document them in `.env.example`.
+6. **Update README**: If public API or usage changed, update `README.md`.
+
+**Documentation checklist:**
+- [ ] `docs/TASKS.md` — task status updated
+- [ ] `docs/ARCHITECTURE.md` — reflects current system (if changed)
+- [ ] `docs/DIAGRAMS.md` — diagrams match current flow (if changed)
+- [ ] `.claude/CLAUDE.md` — core flow accurate (if changed)
+- [ ] `.env.example` — all env vars documented (if new vars added)
 
 ### Phase 5: Delivery
 
@@ -148,6 +160,6 @@ When modifying shared interfaces, verify consistency:
 - [ ] **Reviewed** (`/code-reviewer`) — high sev issues fixed
 - [ ] **Linted** (`/code-linter`) — clean
 - [ ] **Privacy Checklist** — all items verified
-- [ ] **Task Status Updated** in `docs/TASKS.md`
+- [ ] **Docs Updated** — TASKS.md, ARCHITECTURE.md, DIAGRAMS.md, CLAUDE.md, .env.example (as needed)
 - [ ] **Commit Verified & Applied**
 - [ ] **PR Created** (if appropriate)

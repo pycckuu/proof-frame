@@ -99,7 +99,7 @@ export default function Home() {
               <h3 className="text-3xl font-bold mb-4">Cryptographic Redaction</h3>
               <p className="text-on-surface-variant leading-relaxed max-w-md">
                 Standard metadata (EXIF) contains GPS, timestamps, and device serials. ProofFrame allows you to redact
-                this sensitive information while proving that the image was not altered by AI.
+                this sensitive information while proving that the image was not altered.
               </p>
             </div>
             <div className="mt-8 flex gap-2 overflow-hidden">
