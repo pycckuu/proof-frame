@@ -346,11 +346,11 @@ export default function AttestPage() {
                 <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">
                   Crop Boundaries (px)
                 </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <CropInput label="X" value={cropX} onChange={setCropX} />
-                  <CropInput label="Y" value={cropY} onChange={setCropY} />
-                  <CropInput label="WIDTH" value={cropW} onChange={setCropW} />
-                  <CropInput label="HEIGHT" value={cropH} onChange={setCropH} />
+                <div className="space-y-4">
+                  <CropSlider label="X" value={cropX} onChange={setCropX} max={naturalWidth} />
+                  <CropSlider label="Y" value={cropY} onChange={setCropY} max={naturalHeight} />
+                  <CropSlider label="WIDTH" value={cropW} onChange={setCropW} max={Math.max(0, naturalWidth - cropX)} />
+                  <CropSlider label="HEIGHT" value={cropH} onChange={setCropH} max={Math.max(0, naturalHeight - cropY)} />
                 </div>
               </div>
 
@@ -621,22 +621,30 @@ export default function AttestPage() {
   );
 }
 
-function CropInput({
+function CropSlider({
   label,
   value,
   onChange,
+  max,
 }: {
   label: string;
   value: number;
+  max: number;
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="space-y-1">
-      <label className="font-label text-[10px] text-outline ml-2">{label}</label>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <label className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant">{label}</label>
+        <span className="font-label text-xs text-primary">{value}px</span>
+      </div>
       <input
-        className="w-full bg-surface-container-highest border-0 rounded-lg text-sm font-label focus:ring-1 focus:ring-primary/40 text-on-surface p-3"
-        type="number"
-        value={value}
+        className="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary"
+        type="range"
+        min={0}
+        max={max || 1}
+        value={Math.min(value, max || 1)}
+        disabled={max === 0}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </div>
