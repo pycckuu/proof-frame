@@ -72,8 +72,9 @@ export async function POST(req: Request) {
     if (process.env.NAMESTONE_API_KEY) {
       try {
         const domain = process.env.ENS_DOMAIN || "proof-frame.eth";
-        // Use IPFS CID as subname if available, otherwise pixel hash prefix
-        const subname = ipfsCid || `0x${(body.pixelHash ?? "").slice(0, 16)}`;
+        // Use IPFS CID as subname, fallback to pixel hash prefix (strip 0x)
+        const hashPrefix = (body.pixelHash ?? "").replace(/^0x/, "").slice(0, 16);
+        const subname = ipfsCid || hashPrefix;
 
         const textRecords: Record<string, string> = {
           "io.proofframe.pixelHash": body.pixelHash ?? "",
