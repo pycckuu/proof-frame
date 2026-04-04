@@ -1,4 +1,9 @@
 import { prove } from "@/lib/prover";
+import { corsHeaders, handleCors } from "@/lib/cors";
+
+export async function OPTIONS(req: Request) {
+  return handleCors(req) ?? new Response(null, { status: 204, headers: corsHeaders() });
+}
 
 export async function POST(req: Request) {
   try {
@@ -7,7 +12,7 @@ export async function POST(req: Request) {
     if (!body.image_base64) {
       return Response.json(
         { error: "image_base64 is required" },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       );
     }
 
@@ -26,10 +31,10 @@ export async function POST(req: Request) {
       signing_key: body.signing_key,
     });
 
-    return Response.json(result);
+    return Response.json(result, { headers: corsHeaders() });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Proof generation failed";
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json({ error: message }, { status: 500, headers: corsHeaders() });
   }
 }

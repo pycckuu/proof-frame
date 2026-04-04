@@ -460,6 +460,35 @@ T8 (Test Images) ─────────────────────
 
 ---
 
+## Phase 11: ENS Hosting (proof-frame.eth)
+
+### T11.1 — Static Export + CORS `[x]`
+
+**Files:** `frontend/lib/api.ts`, `frontend/lib/cors.ts`, `frontend/next.config.js`, `frontend/package.json`, `frontend/app/attest/page.tsx`, `frontend/app/api/prove/route.ts`, `frontend/app/api/relay/route.ts`
+
+- [x] Create `lib/api.ts` — `API_BASE` from `NEXT_PUBLIC_API_BASE` env var
+- [x] Create `lib/cors.ts` — CORS headers helper for API routes
+- [x] Add conditional `output: "export"` to `next.config.js` (when `STATIC_EXPORT=true`)
+- [x] Add `build:static` script to `package.json`
+- [x] Update `attest/page.tsx` — use `API_BASE` for fetch calls, fix `Buffer.from` to browser-safe `btoa`
+- [x] Add CORS headers + OPTIONS handler to `/api/prove` and `/api/relay`
+- [x] Verify: `bun run build` (normal) and `STATIC_EXPORT=true bun run build` (static) both pass
+
+### T11.2 — Deploy to Vercel `[ ]`
+
+- [ ] Deploy Next.js app to Vercel (`bunx vercel --prod`)
+- [ ] Set env vars in Vercel dashboard (RELAYER_PRIVATE_KEY, NAMESTONE_API_KEY, INFURA_*, etc.)
+- [ ] Verify API routes work on Vercel URL
+
+### T11.3 — Upload to IPFS + Set ENS Contenthash `[ ]`
+
+- [ ] Build static: `STATIC_EXPORT=true NEXT_PUBLIC_API_BASE=https://app.vercel.app bun run build:static`
+- [ ] Upload `frontend/out/` to IPFS (w3cli, Pinata, or Fleek)
+- [ ] Set contenthash on proof-frame.eth via app.ens.domains
+- [ ] Verify: `https://proof-frame.eth.limo` loads all pages
+
+---
+
 ## Key Risks
 
 1. **`image` crate riscv32im compilation** — highest risk. Fallback: pass raw pixels from host (weaker proof).
@@ -474,4 +503,5 @@ T8 (Test Images) ─────────────────────
 | ZK Core | `RISC0_DEV_MODE=1 cargo run -p proofframe-host --release -- --image test_images/ethglobal_cannes.png` |
 | Contracts | `cd contracts && forge build && forge test` |
 | Frontend | `cd frontend && bun run build` |
+| Static Export | `cd frontend && STATIC_EXPORT=true bun run build` |
 | Privacy | `grep -r "msg.sender" contracts/src/` (should be zero identity checks) |
