@@ -3,13 +3,10 @@ name = "proofframe-host"
 version = "0.1.0"
 edition = "2021"
 
-[features]
-cuda = ["risc0-zkvm/cuda"]
-
 [dependencies]
 proofframe-common = { path = "../common", features = ["crypto"] }
 proofframe-methods = { path = "../methods" }
-risc0-zkvm = { version = "3.0", default-features = true }
+risc0-zkvm = "3.0"
 image = { version = "0.25", default-features = false, features = ["png"] }
 k256 = { version = "0.13.3", features = ["ecdsa"] }
 rand = "0.8"
