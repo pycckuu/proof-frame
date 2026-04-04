@@ -447,47 +447,40 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-## Phase 10: Real Groth16 Proofs (RunPod Serverless)
+## Phase 10: Proof Generation (Dev Mode — Local)
 
-### T10.1 — Docker Image for GPU Proving `[x]`
+> **Decision:** RunPod serverless GPU proving was attempted but abandoned for the hackathon
+> due to persistent worker initialization failures (container pull timeouts, CUDA driver
+> mismatches, disk size issues). The infrastructure is in place (Docker image, GitHub Actions,
+> RunPod endpoint) but needs debugging post-hackathon. For the demo, we use local dev mode
+> proving via the Vercel-hosted `/api/prove` route with `RISC0_DEV_MODE=1`.
 
-**Files:** `Dockerfile`, `handler.py`, `host/Cargo.toml`
+### T10.1 — Docker Image `[x]`
 
-- [x] Multi-stage Docker build: CUDA devel builder + CUDA runtime
-- [x] Builder: `nvidia/cuda:12.2.2-devel-ubuntu22.04` with CUDA toolkit for GPU kernel compilation
-- [x] Host binary built with `--features cuda` for GPU-accelerated Groth16 proving
-- [x] `host/Cargo.toml`: Added `cuda` feature forwarding to `risc0-zkvm/cuda`
-- [x] Pre-compile guest ELF at build time (not runtime)
-- [x] Python handler: decode base64 image, call Rust binary, return receipt JSON
-- [x] Push to GHCR via GitHub Actions: `.github/workflows/docker-prover.yml`
+- [x] Dockerfile: `rust:1.88-bookworm` builder, `ubuntu:22.04` runtime, `RISC0_DEV_MODE=1`
+- [x] GitHub Actions: `.github/workflows/docker-prover.yml` builds and pushes to GHCR
+- [x] Image: `ghcr.io/pycckuu/proofframe-prover:latest` (dev mode, no CUDA)
 
-### T10.2 — RunPod Serverless Endpoint `[x]`
+### T10.2 — RunPod Endpoint `[~]` (blocked)
 
-- [x] Create RunPod serverless endpoint `proofframe-prover` (RTX 4090, 24 GB Pro)
-- [x] Endpoint ID: `8wd9ln9rr730ji`
-- [x] Config: max workers 1, active workers 0 (spawn on demand), idle timeout 5s
-- [x] Container disk: 10 GB, minimum CUDA 12.2
-- [x] Point to GHCR image: `ghcr.io/pycckuu/proofframe-prover:latest`
+- [x] Created endpoint `proofframe-prover` (ID: `8wd9ln9rr730ji`)
+- [x] Config: max workers 1, active workers 0, idle timeout 5s, 10 GB disk
+- [ ] **BLOCKED:** Workers stuck in "Initializing" state — container pull never completes
+- [ ] Post-hackathon: debug RunPod container pull, try CPU worker type, or switch to Fly.io
 
-### T10.3 — Frontend Prove API + UI `[x]`
+### T10.3 — Local Proof Generation (Hackathon Fallback) `[x]`
 
-**Files:** `frontend/app/api/prove/route.ts`, `frontend/app/api/prove/status/route.ts`, `frontend/app/attest/page.tsx`
+- [x] `PROVE_PROVIDER=local` on Vercel — runs `proofframe-host` binary via `/api/prove`
+- [x] `RISC0_DEV_MODE=1` — fast dev proofs (~3s), accepted by MockVerifier contract
+- [x] Contract: `0xCb102D1c761960F63de87959019D4865d4F6F1d6` (MockVerifier + MockWorldID)
+- [x] Frontend prover abstraction supports both local and RunPod backends
 
-- [x] `/api/prove` POST: submit image + config to RunPod, return jobId
-- [x] `/api/prove/status` GET: poll RunPod status, return receipt when done
-- [x] Attest page: "Generate Proof (GPU)" button with progress indicator
-- [x] Keep manual receipt upload as fallback
-- [x] Env vars in Vercel: `RUNPOD_API_KEY`, `RUNPOD_ENDPOINT_ID`, `PROVE_PROVIDER=runpod`
+### T10.4 — Real Verifier (Post-Hackathon) `[ ]`
 
-### T10.4 — Redeploy with Real Verifier `[x]`
-
-- [x] IMAGE_ID: `0xde587e658c4ace1c91c6c0419dfffab48e152795e2d7979748d74eff344a198a`
-- [x] Redeployed ImageAttestor with real RISC Zero Verifier Router (`0x925d8331...`)
-- [x] New contract: `0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b`
-- [x] Updated `frontend/lib/contracts.ts` with new contract address
-- [ ] E2E test: frontend → RunPod GPU → Groth16 receipt → relay → Sepolia → verified
-
-**Cost:** ~$0.03-0.09 per proof on RTX 4090 (pay per second)
+- [ ] Fix RunPod worker initialization or switch to alternative GPU provider
+- [ ] Build with `--features cuda` for real Groth16 proving
+- [ ] Redeploy contract with real RISC Zero Verifier Router (`0x925d8331...`)
+- [ ] E2E: frontend → GPU prover → Groth16 receipt → relay → Sepolia → verified on-chain
 
 ---
 
