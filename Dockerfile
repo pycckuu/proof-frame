@@ -16,6 +16,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install system deps for RISC Zero + OpenSSL + Rust
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential pkg-config libssl-dev cmake git curl protobuf-compiler \
+    clang libclang-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust
