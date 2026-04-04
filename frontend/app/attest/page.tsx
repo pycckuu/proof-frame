@@ -44,6 +44,8 @@ export default function AttestPage() {
   // Submission
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [ensName, setEnsName] = useState<string | null>(null);
+  const [ipfsCid, setIpfsCid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleImageFile = useCallback(async (f: File) => {
@@ -84,10 +86,17 @@ export default function AttestPage() {
     setError(null);
 
     try {
+      // Read clean image as base64 for IPFS upload (if file loaded)
+      let image_base64: string | undefined;
+      if (file) {
+        const buffer = await file.arrayBuffer();
+        image_base64 = Buffer.from(buffer).toString("base64");
+      }
+
       const res = await fetch("/api/relay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(receipt),
+        body: JSON.stringify({ ...receipt, image_base64 }),
       });
 
       if (!res.ok) {
@@ -97,6 +106,8 @@ export default function AttestPage() {
 
       const data = await res.json();
       setTxHash(data.txHash);
+      setEnsName(data.ensName || null);
+      setIpfsCid(data.ipfsCid || null);
       setStatus("confirmed");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed");
@@ -383,14 +394,31 @@ export default function AttestPage() {
                   Attestation Submitted
                 </span>
               </div>
-              <a
-                href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-label text-xs text-primary hover:underline break-all"
-              >
-                {txHash}
-              </a>
+              <div className="space-y-2">
+                <a
+                  href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-label text-xs text-primary hover:underline break-all block"
+                >
+                  TX: {txHash}
+                </a>
+                {ensName && (
+                  <p className="font-label text-xs text-on-surface-variant">
+                    ENS: <span className="text-secondary font-medium">{ensName}</span>
+                  </p>
+                )}
+                {ipfsCid && (
+                  <a
+                    href={`https://ipfs.io/ipfs/${ipfsCid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-label text-xs text-primary hover:underline break-all block"
+                  >
+                    IPFS: ipfs://{ipfsCid}
+                  </a>
+                )}
+              </div>
             </div>
           )}
           {status === "error" && error && (

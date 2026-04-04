@@ -17,13 +17,15 @@ Photographer's device (PRIVATE):
 Relayer (PUBLIC, anonymous):
   6. Backend submits attestImage() tx from relayer wallet
   7. msg.sender = relayer address (shared, NOT photographer)
-  8. Calls NameStone API for gasless ENS subname
+  8. Uploads clean PNG to IPFS (Infura) → ipfs://Qm...
+  9. Calls NameStone API for gasless ENS subname ({ipfs-cid}.proof-frame.eth)
+  10. Sets ENS text records: pixelHash, txHash, IPFS CID, disclosed metadata
 
 On-chain (Sepolia):
-  9. Verify RISC Zero Groth16 proof (~300K gas)
-  10. Optional: Verify World ID proof (~250K gas)
-  11. Store attestation keyed by pixelHash
-  12. NO reference to photographer's identity anywhere
+  11. Verify RISC Zero Groth16 proof (~300K gas)
+  12. Optional: Verify World ID proof (~250K gas)
+  13. Store attestation keyed by pixelHash
+  14. NO reference to photographer's identity anywhere
 ```
 
 ## CRITICAL PRIVACY RULE

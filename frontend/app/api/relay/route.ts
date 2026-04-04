@@ -22,6 +22,7 @@ export async function POST(req: Request) {
       transport: http(process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org"),
     });
 
+    // 1. Submit attestation on-chain
     const hash = await client.writeContract({
       address: IMAGE_ATTESTOR_ADDRESS,
       abi: IMAGE_ATTESTOR_ABI,
@@ -41,7 +42,85 @@ export async function POST(req: Request) {
       ],
     });
 
-    return Response.json({ txHash: hash });
+    // 2. Upload clean image to IPFS via Infura (optional)
+    let ipfsCid: string | null = null;
+    if (body.image_base64 && process.env.INFURA_IPFS_PROJECT_ID) {
+      try {
+        const formData = new FormData();
+        const imageBuffer = Buffer.from(body.image_base64, "base64");
+        const blob = new Blob([imageBuffer], { type: "image/png" });
+        formData.append("file", blob, "clean.png");
+
+        const auth = Buffer.from(
+          `${process.env.INFURA_IPFS_PROJECT_ID}:${process.env.INFURA_IPFS_PROJECT_SECRET}`
+        ).toString("base64");
+
+        const ipfsRes = await fetch("https://ipfs.infura.io:5001/api/v0/add", {
+          method: "POST",
+          headers: { Authorization: `Basic ${auth}` },
+          body: formData,
+        });
+        const ipfsData = await ipfsRes.json();
+        ipfsCid = ipfsData.Hash;
+      } catch (ipfsErr) {
+        console.error("IPFS upload failed (non-fatal):", ipfsErr);
+      }
+    }
+
+    // 3. Create ENS subname via NameStone (optional)
+    let ensName: string | null = null;
+    if (process.env.NAMESTONE_API_KEY) {
+      try {
+        const domain = process.env.ENS_DOMAIN || "proof-frame.eth";
+        // Use IPFS CID as subname if available, otherwise pixel hash prefix
+        const subname = ipfsCid || `0x${(body.pixelHash ?? "").slice(0, 16)}`;
+
+        const textRecords: Record<string, string> = {
+          "io.proofframe.pixelHash": body.pixelHash ?? "",
+          "io.proofframe.txHash": hash,
+          "io.proofframe.chain": "sepolia",
+          "io.proofframe.contract": IMAGE_ATTESTOR_ADDRESS,
+        };
+        if (body.disclosedDate)
+          textRecords["io.proofframe.date"] = body.disclosedDate;
+        if (body.disclosedLocation)
+          textRecords["io.proofframe.location"] = body.disclosedLocation;
+        if (body.disclosedCameraMake)
+          textRecords["io.proofframe.camera"] = body.disclosedCameraMake;
+        if (ipfsCid) textRecords["io.proofframe.image"] = `ipfs://${ipfsCid}`;
+
+        const nsRes = await fetch(
+          "https://namestone.com/api/public_v1/set-name",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: process.env.NAMESTONE_API_KEY,
+            },
+            body: JSON.stringify({
+              domain,
+              name: subname,
+              address: "0x0000000000000000000000000000000000000000",
+              text_records: textRecords,
+            }),
+          }
+        );
+
+        if (nsRes.ok) {
+          ensName = `${subname}.${domain}`;
+        } else {
+          console.error(
+            "NameStone error:",
+            nsRes.status,
+            await nsRes.text()
+          );
+        }
+      } catch (ensErr) {
+        console.error("ENS subname creation failed (non-fatal):", ensErr);
+      }
+    }
+
+    return Response.json({ txHash: hash, ensName, ipfsCid });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return Response.json({ error: message }, { status: 500 });
