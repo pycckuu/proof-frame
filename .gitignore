@@ -34,3 +34,6 @@ methods/guest/target/
 *.swp
 *.swo
 output/
+output-*/
+contracts/broadcast/
+contracts/foundry.lock
