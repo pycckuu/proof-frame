@@ -334,12 +334,13 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 7: Cross-Boundary Verification
 
-### T5.2 — Pixel Hash Consistency `[ ]`
+### T5.2 — Pixel Hash Consistency `[x]`
 
-- [ ] Take clean PNG output from T5.1
-- [ ] Compute pixel hash using browser method (canvas RGBA -> extract RGB -> SHA-256)
-- [ ] Compare with pixel_hash from ZK proof journal
-- [ ] If mismatch: investigate (RGBA vs RGB, row padding, color space)
+- [x] Take clean PNG output from T5.1 (`test_images/ethglobal_cannes.clean.png`)
+- [x] Compute pixel hash using browser method (canvas RGBA -> extract RGB -> SHA-256)
+- [x] Compare with pixel_hash from ZK proof journal
+- [x] Result: MATCH — `8eedb92fe2cd904248747b5631b9fbd29bcebd14509a905835c903957add9fc2`
+- [x] Verification script: `bun run frontend/scripts/verify-pixel-hash.ts`
 
 ---
 

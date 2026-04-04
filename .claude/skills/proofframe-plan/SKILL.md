@@ -107,6 +107,6 @@ Output a single actionable plan:
 5. **Acceptance Criteria**:
    - ZK: `cargo build -p proofframe-methods` + `cargo test -p proofframe-common`
    - Contracts: `forge build && forge test`
-   - Frontend: `npm run build`
+   - Frontend: `bun run build`
    - Privacy: no identity leaks at any layer
 6. **Risks & Mitigations**
