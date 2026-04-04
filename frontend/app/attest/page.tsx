@@ -765,7 +765,7 @@ export default function AttestPage() {
                 </a>
                 {ensName && (
                   <a
-                    href={`https://app.ens.domains/${ensName}`}
+                    href={`https://sepolia.app.ens.domains/${ensName}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-label text-xs text-secondary hover:underline block"

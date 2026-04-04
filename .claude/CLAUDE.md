@@ -22,7 +22,7 @@ Relayer (PUBLIC, anonymous):
   8. Backend submits attestImage() tx from relayer wallet
   7. msg.sender = relayer address (shared, NOT photographer)
   8. Uploads clean PNG to IPFS (Infura) → ipfs://Qm...
-  9. Calls NameStone API for gasless ENS subname ({ipfs-cid}.proof-frame.eth)
+  9. Contract creates on-chain ENS subname ({label}.proof-frame.eth) via NameWrapper
   10. Sets ENS text records: pixelHash, txHash, IPFS CID, disclosed metadata
 
 On-chain (Sepolia):
@@ -55,7 +55,7 @@ system if it doesn't expose them. Privacy enables adoption, adoption fights fake
    - PNG uses integer-only zlib inflate; JPEG DCT needs float (no FPU in riscv32im)
 4. **Chain:** Ethereum Sepolia
 5. **Submission:** Permissionless relayer — contract only checks proof validity
-6. **ENS:** NameStone gasless subnames via CCIP-Read
+6. **ENS:** On-chain subdomains via NameWrapper (setSubnodeRecord + setText in attestImage())
 7. **Trust Registry:** Local-first. MVP uses hardcoded mock keys; Chainlink CRE is optional bolt-on
 
 ## What's Optional (Not in MVP)
@@ -168,8 +168,9 @@ E2E testing → Ledger Clear Signing → Pre-compute proofs → Demo prep
 
 ## Contract Addresses (Sepolia)
 
-- **ImageAttestor (current dev):** `0xdc4745c89D3Fc12ba8a781727c3495791e447Ccb` (MockVerifier + MockWorldID, ipfsCid on-chain, per-image nullifier)
+- **ImageAttestor (current dev):** `0x23b36B8d7Ed0F0299dbEae8CA773b55A9e891cBF` (MockVerifier + MockWorldID, ipfsCid on-chain, per-image nullifier, on-chain ENS subdomains)
 - **ImageAttestor (real verifier):** `0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b` (Real Verifier Router, Groth16)
 - RISC Zero Verifier Router: `0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187`
 - World ID Router: `0x469449f251692e0779667583026b5a1e99512157`
+- ENS NameWrapper: `0x0635513f179D50A207757E05759CbD106d7dFcE8`
 - ENS Public Resolver: `0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5`
