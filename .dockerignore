@@ -1,5 +1,4 @@
 target/
-frontend/
 contracts/
 docs/
 scripts/
@@ -8,5 +7,5 @@ scripts/
 .claude/
 .env*
 *.md
-node_modules/
-.next/
+frontend/node_modules/
+frontend/.next/

@@ -718,7 +718,26 @@ proofframe/
 
 ---
 
-## 16. ENVIRONMENT VARIABLES
+## 16. DEPLOYMENT
+
+### Fly.io (Primary — Next.js + Rust Prover)
+
+**URL:** `https://proofframe.fly.dev`
+
+3-stage Docker build (`Dockerfile.fly`):
+1. **rust:1.88-bookworm** — compiles `proofframe-host` binary + guest ELF via RISC Zero toolchain
+2. **node:20-bookworm** — builds Next.js frontend with `bun`
+3. **node:20-slim** — slim runtime with binary at `/usr/local/bin/proofframe-host`
+
+**Config (`fly.toml`):** 2 shared CPUs, 1GB RAM, Paris region (cdg), auto-stop/start.
+
+**Why Fly.io:** The `/api/prove` route spawns the Rust binary via `execFile()` — requires a persistent server, not serverless. Fly.io supports Docker with long-running processes. Vercel serverless can't spawn arbitrary binaries.
+
+**Deploy:** `fly deploy` from project root.
+
+---
+
+## 17. ENVIRONMENT VARIABLES
 
 ```bash
 # Blockchain
