@@ -4,7 +4,7 @@
 
 AI-generated images are flooding the internet. Anyone can fabricate a photo of a war zone, a protest, or a politician — and there's no reliable way to tell real from fake. This is the misinformation crisis: when every image is suspect, truth loses its power.
 
-ProofFrame fights back. It's a zero-knowledge content authenticity system that cryptographically proves an image **came from a real camera, not an AI model** — while keeping the photographer anonymous. Built with RISC Zero zkVM for [ETHGlobal Cannes 2026](https://ethglobal.com/events/cannes2026).
+ProofFrame fights back. It's a zero-knowledge content authenticity system that cryptographically proves an image **came from a real camera, not an AI model** — while keeping the photographer anonymous. Built with [RISC Zero](https://risczero.com) zkVM, [ENS](https://ens.domains) on-chain subdomains, [Ledger](https://ledger.com) Clear Signing, and [World ID](https://worldcoin.org) anti-Sybil verification for [ETHGlobal Cannes 2026](https://ethglobal.com/events/cannes2026).
 
 ### Why existing solutions fail
 
