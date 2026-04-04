@@ -12,6 +12,7 @@
   "dependencies": {
     "@namestone/namestone-sdk": "latest",
     "@tanstack/react-query": "^5",
+    "@worldcoin/idkit": "1.3.0",
     "next": "^14",
     "react": "^18",
     "react-dom": "^18",

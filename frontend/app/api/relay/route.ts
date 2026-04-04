@@ -1,8 +1,26 @@
-import { createWalletClient, http } from "viem";
+import { createWalletClient, http, decodeAbiParameters } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import { IMAGE_ATTESTOR_ABI, IMAGE_ATTESTOR_ADDRESS } from "@/lib/contracts";
 import { corsHeaders, handleCors } from "@/lib/cors";
+
+type Proof8 = readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
+const EMPTY_PROOF: Proof8 = [BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0)];
+
+/** Decode World ID proof from hex string to uint256[8] array */
+function decodeWorldIdProof(proof: string | undefined): Proof8 {
+  if (!proof) return EMPTY_PROOF;
+  try {
+    const hexProof = proof.startsWith("0x") ? proof : `0x${proof}`;
+    const decoded = decodeAbiParameters(
+      [{ type: "uint256[8]" }],
+      hexProof as `0x${string}`
+    );
+    return decoded[0] as unknown as Proof8;
+  } catch {
+    return EMPTY_PROOF;
+  }
+}
 
 export async function OPTIONS(req: Request) {
   return handleCors(req) ?? new Response(null, { status: 204, headers: corsHeaders() });
@@ -54,6 +72,10 @@ export async function POST(req: Request) {
         body.disclosedCameraMake ?? "",
         body.imageWidth ?? 0,
         body.imageHeight ?? 0,
+        // World ID params (optional — pass 0 to skip)
+        BigInt(body.worldIdRoot || 0),
+        BigInt(body.worldIdNullifier || 0),
+        decodeWorldIdProof(body.worldIdProof),
       ],
     });
 

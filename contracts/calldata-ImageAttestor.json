@@ -6,7 +6,7 @@
       "deployments": [
         {
           "chainId": 11155111,
-          "address": "0x31B1f11EBDCB75c7D73674a80b7a52f6f1a61E80"
+          "address": "0x3f0b96d38cd8f75f72ca4c827e28e7f4c8f981d9"
         }
       ],
       "abi": [
@@ -25,7 +25,10 @@
             { "name": "disclosedLocation", "type": "string" },
             { "name": "disclosedCameraMake", "type": "string" },
             { "name": "imageWidth", "type": "uint32" },
-            { "name": "imageHeight", "type": "uint32" }
+            { "name": "imageHeight", "type": "uint32" },
+            { "name": "worldIdRoot", "type": "uint256" },
+            { "name": "worldIdNullifier", "type": "uint256" },
+            { "name": "worldIdProof", "type": "uint256[8]" }
           ],
           "outputs": []
         }
@@ -42,7 +45,7 @@
   },
   "display": {
     "formats": {
-      "0x203f9663": {
+      "0xd747d8b5": {
         "$id": "attestImage",
         "intent": "Attest Image Authenticity",
         "fields": [
@@ -89,6 +92,16 @@
           {
             "path": "imageHeight",
             "label": "Height (px)",
+            "format": "raw"
+          },
+          {
+            "path": "worldIdRoot",
+            "label": "World ID Root",
+            "format": "raw"
+          },
+          {
+            "path": "worldIdNullifier",
+            "label": "World ID Nullifier",
             "format": "raw"
           }
         ]

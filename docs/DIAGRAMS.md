@@ -35,7 +35,7 @@ graph TB
 
     PHOTO --> CONFIG
     CONFIG --> GUEST
-    WORLDID -.->|conditional| RELAY
+    WORLDID -.->|optional anti-Sybil| RELAY
     GUEST -->|seal + journal| RELAY
     RELAY -->|attestImage tx| CONTRACT
     RELAY -->|NameStone API| ENS
@@ -285,9 +285,9 @@ sequenceDiagram
     F->>F: Generate ZK proof locally
     Note over F: Proof generation happens<br/>on photographer's device or<br/>RunPod GPU (Phase 10)
 
-    opt World ID enabled
-        J->>F: World ID scan (QR)
-        F->>F: Receive WID proof
+    opt World ID (anti-Sybil)
+        J->>F: World ID scan (IDKit QR)
+        F->>F: Capture merkle_root + nullifier + proof
     end
 
     F->>R: POST {seal, journal, image_base64}
@@ -337,7 +337,7 @@ graph TB
     end
 
     subgraph WID["🌍 World ID ($20K pool)"]
-        WID_P["signal = pixelHash<br/>Anti-Sybil per image<br/>CONDITIONAL on Mateo"]
+        WID_P["signal = pixelHash<br/>Anti-Sybil per image<br/>IMPLEMENTED (optional)"]
     end
 
     ZK --> CONTRACT

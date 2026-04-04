@@ -3,9 +3,9 @@ import { sepolia } from "viem/chains";
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 
-// Deployed on Sepolia with real RISC Zero Verifier Router (Groth16)
+// Deployed on Sepolia: MockVerifier (ZK) + MockWorldID (both dev mode)
 export const IMAGE_ATTESTOR_ADDRESS =
-  "0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b" as const;
+  "0xCb102D1c761960F63de87959019D4865d4F6F1d6" as const;
 
 export const IMAGE_ATTESTOR_ABI = [
   {
@@ -23,6 +23,9 @@ export const IMAGE_ATTESTOR_ABI = [
       { name: "disclosedCameraMake", type: "string" },
       { name: "imageWidth", type: "uint32" },
       { name: "imageHeight", type: "uint32" },
+      { name: "worldIdRoot", type: "uint256" },
+      { name: "worldIdNullifier", type: "uint256" },
+      { name: "worldIdProof", type: "uint256[8]" },
     ],
     outputs: [],
     stateMutability: "nonpayable",
