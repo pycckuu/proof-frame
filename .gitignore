@@ -38,3 +38,4 @@ output/
 output-*/
 contracts/broadcast/
 contracts/foundry.lock
+.vercel

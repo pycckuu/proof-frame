@@ -425,20 +425,23 @@ T8 (Test Images) ─────────────────────
 
 ### T10.1 — Docker Image for GPU Proving `[x]`
 
-**Files:** `Dockerfile`, `handler.py`
+**Files:** `Dockerfile`, `handler.py`, `host/Cargo.toml`
 
-- [x] Multi-stage Docker build: compile host binary with CUDA support, package with Python RunPod handler
+- [x] Multi-stage Docker build: CUDA devel builder + CUDA runtime
+- [x] Builder: `nvidia/cuda:12.2.2-devel-ubuntu22.04` with CUDA toolkit for GPU kernel compilation
+- [x] Host binary built with `--features cuda` for GPU-accelerated Groth16 proving
+- [x] `host/Cargo.toml`: Added `cuda` feature forwarding to `risc0-zkvm/cuda`
 - [x] Pre-compile guest ELF at build time (not runtime)
 - [x] Python handler: decode base64 image, call Rust binary, return receipt JSON
-- [ ] Test locally with `RISC0_DEV_MODE=1`, then on RunPod with real GPU
 - [x] Push to GHCR via GitHub Actions: `.github/workflows/docker-prover.yml`
 
-### T10.2 — RunPod Serverless Endpoint `[~]`
+### T10.2 — RunPod Serverless Endpoint `[x]`
 
-- [ ] Create RunPod serverless endpoint (RTX 4090, idle timeout 5 min, max workers 2)
-- [ ] Point to GHCR image: `ghcr.io/pycckuu/proofframe-prover:latest`
-- [ ] Test via curl: submit image, poll status, get receipt
-- [ ] Verify receipt is valid (real Groth16, not dev mode)
+- [x] Create RunPod serverless endpoint `proofframe-prover` (RTX 4090, 24 GB Pro)
+- [x] Endpoint ID: `8wd9ln9rr730ji`
+- [x] Config: max workers 1, active workers 0 (spawn on demand), idle timeout 5s
+- [x] Container disk: 10 GB, minimum CUDA 12.2
+- [x] Point to GHCR image: `ghcr.io/pycckuu/proofframe-prover:latest`
 
 ### T10.3 — Frontend Prove API + UI `[x]`
 
@@ -448,11 +451,13 @@ T8 (Test Images) ─────────────────────
 - [x] `/api/prove/status` GET: poll RunPod status, return receipt when done
 - [x] Attest page: "Generate Proof (GPU)" button with progress indicator
 - [x] Keep manual receipt upload as fallback
-- [x] Env vars already in `.env.example`: `RUNPOD_API_KEY`, `RUNPOD_ENDPOINT_ID`
+- [x] Env vars in Vercel: `RUNPOD_API_KEY`, `RUNPOD_ENDPOINT_ID`, `PROVE_PROVIDER=runpod`
 
 ### T10.4 — Redeploy with Real Verifier `[ ]`
 
-- [ ] Redeploy ImageAttestor pointing to RISC Zero Verifier Router (`0x925d8331...`)
+- [ ] Get IMAGE_ID from Docker build output (compiled guest ELF hash)
+- [ ] Redeploy ImageAttestor with `USE_MOCK_VERIFIER=false` + real IMAGE_ID pointing to RISC Zero Verifier Router (`0x925d8331...`)
+- [ ] Update `frontend/lib/contracts.ts` with new contract address
 - [ ] Submit Groth16 receipt — verified by real on-chain verifier
 - [ ] Full E2E: frontend → RunPod GPU → Groth16 receipt → relay → Sepolia → verified
 
