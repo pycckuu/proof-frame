@@ -34,6 +34,12 @@ ENV CUDA_HOME=/usr/local/cuda
 ENV PATH="${CUDA_HOME}/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
 
+# CI runner has no GPU, so nvcc -arch=native fails.
+# Wrap real nvcc with a shim that replaces -arch=native with -arch=sm_89 (RTX 4090).
+RUN mv /usr/local/cuda/bin/nvcc /usr/local/cuda/bin/nvcc.real
+COPY nvcc-shim.sh /usr/local/cuda/bin/nvcc
+RUN chmod +x /usr/local/cuda/bin/nvcc
+
 WORKDIR /build
 
 # Copy workspace files
