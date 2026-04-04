@@ -348,26 +348,24 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 8: Bounty Integrations
 
-### T7.1 — ENS NameStone + IPFS `[x]`
+### T7.1 — ENS On-Chain Subdomains + IPFS `[x]`
 
-**Files:** `frontend/app/api/relay/route.ts`, `frontend/app/attest/page.tsx`
+**Files:** `contracts/src/ImageAttestor.sol`, `frontend/app/api/relay/route.ts`, `frontend/app/api/upload/route.ts`
 
-- [x] After successful attestation tx, upload clean PNG to IPFS (Infura)
-- [x] Create ENS subname via NameStone: `{ipfs-cid}.proof-frame.eth` (content-addressed)
-- [x] Set text records: pixelHash, txHash, date, location, camera, chain, contract, IPFS CID
-- [x] Return ENS name + IPFS CID alongside tx hash in API response
-- [x] Display ENS name and IPFS link in attest success state
-- [x] Graceful fallbacks: skip IPFS if no Infura key, skip ENS if no NameStone key
+- [x] IPFS upload via `/api/upload` route (before on-chain tx, so CID available for signing + contract)
+- [x] On-chain ENS subdomain creation in `attestImage()` via NameWrapper.setSubnodeRecord()
+- [x] Text records set on-chain via PublicResolver.setText() (pixelHash, fileHash, ipfsCid)
+- [x] Label: first 16 chars of IPFS CID, fallback to pixel hash hex prefix
+- [x] Owner of proof-frame.eth grants contract operator approval (setApprovalForAll)
+- [x] Replaced off-chain NameStone/CCIP-Read with on-chain ENS — atomic with attestation
+- [x] Contract: `0x23b36B8d7Ed0F0299dbEae8CA773b55A9e891cBF`
 
-### T7.3 — Rich ENS Text Records `[x]`
+### T7.3 — ENS Text Records (on-chain) `[x]`
 
-**Files:** `frontend/app/api/relay/route.ts`, `frontend/app/verify/page.tsx`
+**Files:** `contracts/src/ImageAttestor.sol`
 
-- [x] Add standard ENS records: `avatar` (IPFS image), `url` (verify link), `description` (human-readable summary)
-- [x] Add ProofFrame core records: `fileHash`, `merkleRoot`, `transforms`, `dimensions`, `version`, `attestedAt`
-- [x] Total: 17 text records (3 standard ENS + 14 ProofFrame-specific) — up from 8
-- [x] Verify page: render `description` as prose summary, render `url` as clickable link, filter `description` from key-value list
-- [x] Privacy verified: no new records expose photographer identity (all data already public in journal)
+- [x] Text records set on-chain by contract: `io.proofframe.pixelHash`, `io.proofframe.fileHash`, `io.proofframe.ipfsCid`
+- [x] Privacy verified: no records expose photographer identity
 
 ---
 

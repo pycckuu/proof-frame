@@ -43,7 +43,7 @@ any identifying information appears on-chain, the project fails at its premise.
 | **ZK proof** | Signing key is a PRIVATE input to the RISC Zero guest. Proof outputs only "some key in this Merkle tree signed this" — not WHICH key. |
 | **World ID** | Nullifier hash is scoped to `(app_id, action_id)`. Different per image = unlinkable. Proof reveals nothing about which human. |
 | **Image file** | Published PNG is re-encoded from decoded pixels. Zero EXIF/XMP/IPTC/C2PA metadata survives. |
-| **ENS subnames** | Created by relayer via NameStone API (project-level auth). No photographer wallet referenced. |
+| **ENS subnames** | Created on-chain by ImageAttestor contract via NameWrapper.setSubnodeRecord(). No photographer wallet referenced. |
 | **Network** | Photographer communicates only with relayer API. Can use Tor/VPN for IP privacy. |
 
 ### What the contract MUST NOT do:
@@ -134,7 +134,7 @@ verifier.verify(seal, GUEST_IMAGE_ID, sha256(journal));
 │  13. Receives proof data from user's browser          │
 │  14. Submits attestImage() tx from RELAYER_PRIVATE_KEY      │
 │  15. msg.sender = relayer wallet (shared across all users)  │
-│  16. Calls NameStone API to create ENS subname              │
+│  16. Contract creates ENS subname via NameWrapper on-chain   │
 │  17. Returns tx hash + ENS name to user               │
 └──────────────────┬──────────────────────────────────────────┘
                    │ attestImage(pixelHash, seal, ...)
@@ -274,12 +274,14 @@ image content. A World ID proof for image A can't be reused for image B.
 **Relayer compatibility:** World ID's `verifyProof` does NOT check `msg.sender`. It verifies
 pure cryptographic parameters. A relayer can submit on behalf of the photographer.
 
-### 4.6 ENS via NameStone (gasless, no photographer wallet)
+### 4.6 ENS via on-chain NameWrapper (no photographer wallet)
 
-**Decision:** The relayer backend calls NameStone API to create subnames like
-`photo-001.proofframe.eth` with text records containing the pixel hash and disclosed metadata.
-NameStone uses project-level API key authentication — no photographer wallet ever involved.
-Subnames resolve via CCIP-Read (ERC-3668). Zero on-chain gas, zero identity leakage.
+**Status: IMPLEMENTED.** The ImageAttestor contract creates ENS subdomains on-chain during
+`attestImage()` by calling `NameWrapper.setSubnodeRecord()`. The parent domain owner
+(`proof-frame.eth`) grants the contract operator approval via `setApprovalForAll()`.
+Subnames like `{ipfs-cid-prefix}.proof-frame.eth` are created with text records
+(pixelHash, fileHash, ipfsCid) set via the Public Resolver. No photographer wallet involved —
+the contract itself is the subdomain creator. Previous NameStone/CCIP-Read approach replaced.
 
 ### 4.8 Local-First Trust Registry (MVP)
 
@@ -388,7 +390,7 @@ In production, these merge — the Ledger's key enters the ZK proof directly."
 ### Contract addresses (Sepolia)
 
 ```
-ImageAttestor (current):   0xdc4745c89D3Fc12ba8a781727c3495791e447Ccb  (MockVerifier + MockWorldID, ipfsCid, per-image nullifier)
+ImageAttestor (current):   0x23b36B8d7Ed0F0299dbEae8CA773b55A9e891cBF  (MockVerifier + MockWorldID, ipfsCid, per-image nullifier, on-chain ENS subdomains)
 ImageAttestor (real ZK):   0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b  (Real Verifier Router, Groth16)
 RISC Zero Verifier Router: 0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187
 World ID Router:           0x469449f251692e0779667583026b5a1e99512157
@@ -565,9 +567,9 @@ For the hackathon, require PNG end-to-end.
 This is near-perfect alignment.
 
 **Integration:**
-- Text records: `io.proofframe.proof` → pixel hash, `io.proofframe.date` → disclosed date
-- Gasless subnames: `photo-001.proofframe.eth` via NameStone API + CCIP-Read
-- NameStone SDK: `@namestone/namestone-sdk` — REST API with project-level API key
+- On-chain subnames: `{label}.proof-frame.eth` created by ImageAttestor via NameWrapper
+- Text records set on-chain via Public Resolver: pixelHash, fileHash, ipfsCid
+- Owner of proof-frame.eth grants contract operator approval (one-time setup)
 
 **Requirement:** "Present at the ENS booth in person on Sunday morning." MANDATORY.
 
@@ -711,7 +713,7 @@ proofframe/
 | Hours behind | What to cut | What you lose | What remains |
 |-------------|-------------|---------------|--------------|
 | 2h at Phase 2 | EXIF in VM → parse on host only (Option A) | Slightly weaker proof chain | Everything else |
-| 3h at Phase 3 | NameStone subnames → plain text records | Per-image ENS names | ENS text records still work |
+| 3h at Phase 3 | On-chain ENS subnames → skip text records | Per-image ENS names | ENS subnames still created |
 | 5h at Phase 3 | Chainlink CRE entirely | $2K bounty | Ledger + ENS + core ZK |
 | 6h at Phase 3 | World ID entirely | $8K bounty | Already conditional |
 | 8h+ at Phase 4 | Dev-mode proofs only | "Real" proof demo | Explain "real proofs take N min" |
@@ -753,8 +755,8 @@ WORLD_APP_ID=app_staging_xxxxx
 NEXT_PUBLIC_WORLD_APP_ID=app_staging_xxxxx  # Client-side for IDKit
 WORLD_ACTION_ID=attest_image
 
-# ENS / NameStone
-NAMESTONE_API_KEY=your_key
+# ENS (on-chain via NameWrapper — no API key needed)
+ENS_PARENT_NODE=0x35b999a4d03e...  # namehash("proof-frame.eth")
 ENS_DOMAIN=proof-frame.eth
 
 # IPFS / Infura (optional — for pinning clean images)
@@ -796,4 +798,4 @@ RISC0_INFO=1                  # Show cycle counts
 
 9. **Relayer funding** — the relayer wallet needs Sepolia ETH. Fund it from a faucet (faucets.chain.link/sepolia) before deploying.
 
-10. **NameStone requires SIWE** — initial domain setup requires a Sign-In With Ethereum signature from the domain owner wallet. Do this before the hackathon.
+10. **ENS NameWrapper approval** — after deploying ImageAttestor, the owner of `proof-frame.eth` must call `NameWrapper.setApprovalForAll(attestorAddress, true)` to authorize on-chain subdomain creation.

@@ -7,6 +7,25 @@ import { corsHeaders, handleCors } from "@/lib/cors";
 type Proof8 = readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
 const EMPTY_PROOF: Proof8 = [BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0), BigInt(0)];
 
+const BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function base58Decode(str: string): Uint8Array {
+  const bytes: number[] = [0];
+  for (const char of str) {
+    const idx = BASE58_ALPHABET.indexOf(char);
+    if (idx < 0) throw new Error(`Invalid base58 char: ${char}`);
+    let carry = idx;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry > 0) { bytes.push(carry & 0xff); carry >>= 8; }
+  }
+  // Add leading zeros
+  for (const char of str) { if (char === "1") bytes.push(0); else break; }
+  return new Uint8Array(bytes.reverse());
+}
+
 /** Decode World ID proof from hex string to uint256[8] array */
 function decodeWorldIdProof(proof: string | undefined): Proof8 {
   if (!proof) return EMPTY_PROOF;
@@ -58,6 +77,18 @@ export async function POST(req: Request) {
     // IPFS CID is provided by the client (uploaded via /api/upload before signing)
     const ipfsCid: string | null = body.ipfsCid || null;
 
+    // Encode IPFS CID as ENS contenthash (0xe3010170 + base58-decoded multihash)
+    let ipfsContenthash: `0x${string}` = "0x";
+    if (ipfsCid) {
+      try {
+        const decoded = base58Decode(ipfsCid);
+        // ENS contenthash for IPFS: codec=0xe3 (ipfs), version=0x01, multicodec=0x70 (dag-pb)
+        ipfsContenthash = `0xe3010170${Buffer.from(decoded).toString("hex")}` as `0x${string}`;
+      } catch {
+        // Skip contenthash if encoding fails
+      }
+    }
+
     // 1. Submit attestation on-chain (with IPFS CID stored in contract)
     const hash = await client.writeContract({
       address: IMAGE_ATTESTOR_ADDRESS,
@@ -76,6 +107,7 @@ export async function POST(req: Request) {
         body.imageWidth ?? 0,
         body.imageHeight ?? 0,
         ipfsCid ?? "",
+        ipfsContenthash,
         // World ID params — randomize nullifier when using mock to avoid DuplicateNullifier
         BigInt(body.worldIdRoot || 0),
         process.env.USE_MOCK_WORLD_ID === "true"
@@ -85,73 +117,12 @@ export async function POST(req: Request) {
       ],
     });
 
-    // 3. Create ENS subname via NameStone (optional)
-    let ensName: string | null = null;
-    if (process.env.NAMESTONE_API_KEY) {
-      try {
-        const domain = process.env.ENS_DOMAIN || "proof-frame.eth";
-        // Use IPFS CID as subname, fallback to pixel hash prefix (strip 0x)
-        const hashPrefix = (body.pixelHash ?? "").replace(/^0x/, "").slice(0, 16);
-        const subname = ipfsCid || hashPrefix;
-
-        const textRecords: Record<string, string> = {
-          // Standard ENS records (rendered by ENS-aware apps)
-          ...(ipfsCid ? { avatar: `ipfs://${ipfsCid}/image.png` } : {}),
-          url: `https://proof-frame.eth/verify?hash=${(body.pixelHash ?? "").replace(/^0x/, "")}`,
-          description: buildDescription(body, ipfsCid),
-
-          // ProofFrame core attestation data
-          "io.proofframe.pixelHash": body.pixelHash ?? "",
-          ...(body.originalPixelHash ? { "io.proofframe.originalPixelHash": body.originalPixelHash } : {}),
-          "io.proofframe.fileHash": body.fileHash ?? "",
-          "io.proofframe.merkleRoot": body.merkleRoot ?? "",
-          "io.proofframe.txHash": hash,
-          "io.proofframe.chain": "sepolia",
-          "io.proofframe.contract": IMAGE_ATTESTOR_ADDRESS,
-          "io.proofframe.transforms": body.transformDesc || "none",
-          "io.proofframe.dimensions": `${body.imageWidth ?? 0}x${body.imageHeight ?? 0}`,
-          "io.proofframe.version": "1",
-          "io.proofframe.attestedAt": new Date().toISOString(),
-
-          // Conditional disclosed metadata
-          ...(body.disclosedDate ? { "io.proofframe.date": body.disclosedDate } : {}),
-          ...(body.disclosedLocation ? { "io.proofframe.location": body.disclosedLocation } : {}),
-          ...(body.disclosedCameraMake ? { "io.proofframe.camera": body.disclosedCameraMake } : {}),
-          ...(ipfsCid ? { "io.proofframe.image": `ipfs://${ipfsCid}/image.png` } : {}),
-          ...(ipfsCid ? { "io.proofframe.metadata": `ipfs://${ipfsCid}/metadata.json` } : {}),
-        };
-
-        const nsRes = await fetch(
-          "https://namestone.com/api/public_v1/set-name",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: process.env.NAMESTONE_API_KEY,
-            },
-            body: JSON.stringify({
-              domain,
-              name: subname,
-              address: "0x0000000000000000000000000000000000000000",
-              ...(ipfsCid ? { contenthash: `ipfs://${ipfsCid}` } : {}),
-              text_records: textRecords,
-            }),
-          }
-        );
-
-        if (nsRes.ok) {
-          ensName = `${subname}.${domain}`;
-        } else {
-          console.error(
-            "NameStone error:",
-            nsRes.status,
-            await nsRes.text()
-          );
-        }
-      } catch (ensErr) {
-        console.error("ENS subname creation failed (non-fatal):", ensErr);
-      }
-    }
+    // 3. ENS subdomain is now created on-chain by the contract (via NameWrapper)
+    //    Derive the subname label to return to the frontend
+    const domain = process.env.ENS_DOMAIN || "proof-frame.eth";
+    const hashPrefix = (body.pixelHash ?? "").replace(/^0x/, "").slice(0, 16);
+    const ensLabel = ipfsCid ? ipfsCid.slice(0, 16) : hashPrefix;
+    const ensName = `${ensLabel}.${domain}`;
 
     return Response.json({ txHash: hash, ensName, ipfsCid }, { headers: corsHeaders() });
   } catch (err) {

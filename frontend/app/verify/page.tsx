@@ -280,7 +280,7 @@ export default function VerifyPage() {
                     <div>
                       <p className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider">ENS Name</p>
                       <a
-                        href={`https://app.ens.domains/${ensName}`}
+                        href={`https://sepolia.app.ens.domains/${ensName}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-label text-xs text-primary hover:underline"
