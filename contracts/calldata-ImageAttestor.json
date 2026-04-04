@@ -6,7 +6,7 @@
       "deployments": [
         {
           "chainId": 11155111,
-          "address": "0x3f0b96d38cd8f75f72ca4c827e28e7f4c8f981d9"
+          "address": "0xfE047dD4FEFEC775c9049a4f624e2B56d015906a"
         }
       ],
       "abi": [
@@ -39,7 +39,7 @@
     "owner": "ProofFrame",
     "info": {
       "legalName": "ProofFrame",
-      "url": "https://proofframe.eth",
+      "url": "https://proof-frame.eth",
       "description": "Zero-knowledge image authenticity attestation. Proves photos are real without revealing the photographer."
     }
   },
@@ -61,17 +61,17 @@
           },
           {
             "path": "merkleRoot",
-            "label": "Trust Registry",
+            "label": "Trust Registry Root",
             "format": "raw"
           },
           {
             "path": "transformDesc",
-            "label": "Transforms",
+            "label": "Transforms Applied",
             "format": "raw"
           },
           {
             "path": "disclosedDate",
-            "label": "Date",
+            "label": "Photo Date",
             "format": "raw"
           },
           {
@@ -81,7 +81,7 @@
           },
           {
             "path": "disclosedCameraMake",
-            "label": "Camera",
+            "label": "Camera Make",
             "format": "raw"
           },
           {
@@ -104,6 +104,11 @@
             "label": "World ID Nullifier",
             "format": "raw"
           }
+        ],
+        "excluded": [
+          { "path": "seal" },
+          { "path": "journalDigest" },
+          { "path": "worldIdProof" }
         ]
       }
     }

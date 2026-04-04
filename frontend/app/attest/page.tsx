@@ -4,6 +4,9 @@ import { useState, useCallback, useMemo } from "react";
 import { computePixelHash } from "@/lib/imageHash";
 import { API_BASE } from "@/lib/api";
 import { IDKitWidget, VerificationLevel, type ISuccessResult } from "@worldcoin/idkit";
+import { useAccount, useSignTypedData } from "wagmi";
+import { ConnectKitButton } from "connectkit";
+import { IMAGE_ATTESTOR_ADDRESS, SEPOLIA_CHAIN_ID } from "@/lib/contracts";
 
 type Receipt = {
   seal: string;
@@ -73,6 +76,10 @@ export default function AttestPage() {
 
   // World ID (required anti-Sybil)
   const [worldIdProof, setWorldIdProof] = useState<ISuccessResult | null>(null);
+
+  // Wallet connection (for Ledger Clear Signing)
+  const { isConnected } = useAccount();
+  const { signTypedDataAsync } = useSignTypedData();
 
   const handleImageFile = useCallback(async (f: File) => {
     setFile(f);
@@ -176,7 +183,53 @@ export default function AttestPage() {
     setError(null);
 
     try {
-      // Read clean image as base64 for IPFS upload (if file loaded)
+      // Step 1: Sign attestation data on wallet/Ledger (Clear Signing UX)
+      // EIP-712 typed data signing triggers Ledger screen showing all fields.
+      // Signature is for UX only — NOT stored on-chain.
+      let ledgerSignature: string | undefined;
+      if (isConnected) {
+        try {
+          ledgerSignature = await signTypedDataAsync({
+            domain: {
+              name: "ProofFrame",
+              version: "1",
+              chainId: BigInt(SEPOLIA_CHAIN_ID),
+              verifyingContract: IMAGE_ATTESTOR_ADDRESS,
+            },
+            types: {
+              AttestImage: [
+                { name: "pixelHash", type: "bytes32" },
+                { name: "fileHash", type: "bytes32" },
+                { name: "merkleRoot", type: "bytes32" },
+                { name: "transformDesc", type: "string" },
+                { name: "disclosedDate", type: "string" },
+                { name: "disclosedLocation", type: "string" },
+                { name: "disclosedCameraMake", type: "string" },
+                { name: "imageWidth", type: "uint32" },
+                { name: "imageHeight", type: "uint32" },
+              ],
+            },
+            primaryType: "AttestImage",
+            message: {
+              pixelHash: receipt.pixelHash as `0x${string}`,
+              fileHash: receipt.fileHash as `0x${string}`,
+              merkleRoot: receipt.merkleRoot as `0x${string}`,
+              transformDesc: receipt.transformDesc || "none",
+              disclosedDate: receipt.disclosedDate || "",
+              disclosedLocation: receipt.disclosedLocation || "",
+              disclosedCameraMake: receipt.disclosedCameraMake || "",
+              imageWidth: receipt.imageWidth,
+              imageHeight: receipt.imageHeight,
+            },
+          });
+        } catch (signErr) {
+          setStatus("idle");
+          setError("Signing cancelled");
+          return;
+        }
+      }
+
+      // Step 2: Read clean image as base64 for IPFS upload
       let image_base64: string | undefined;
       if (file) {
         const buffer = await file.arrayBuffer();
@@ -188,6 +241,7 @@ export default function AttestPage() {
         image_base64 = btoa(binary);
       }
 
+      // Step 3: Send to relay (relay broadcasts from its own wallet)
       const res = await fetch(`${API_BASE}/api/relay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -197,6 +251,7 @@ export default function AttestPage() {
           worldIdRoot: worldIdProof?.merkle_root || "0",
           worldIdNullifier: worldIdProof?.nullifier_hash || "0",
           worldIdProof: worldIdProof?.proof || undefined,
+          ledgerSignature,
         }),
       });
 
@@ -612,6 +667,52 @@ export default function AttestPage() {
             </section>
           )}
 
+          {/* Wallet Connection (for Ledger Clear Signing) */}
+          {receipt && worldIdProof && (
+            <section className="bg-surface-container-low rounded-xl p-8 border border-white/[0.02]">
+              <div className="flex items-center gap-4 mb-6">
+                <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
+                <div>
+                  <h2 className="font-label text-lg font-medium">Sign with Ledger</h2>
+                  <p className="text-[10px] font-label text-outline uppercase tracking-wider mt-1">
+                    Optional — Connect wallet to sign attestation on Ledger
+                  </p>
+                </div>
+              </div>
+
+              {!isConnected ? (
+                <div className="space-y-3">
+                  <ConnectKitButton.Custom>
+                    {({ show }) => (
+                      <button
+                        onClick={show}
+                        className="w-full py-4 rounded-xl bg-surface-container-highest text-on-surface font-bold text-sm flex items-center justify-center gap-3 border border-outline-variant/20 hover:border-primary/40 hover:bg-surface-container transition-all"
+                      >
+                        <span className="material-symbols-outlined">link</span>
+                        <span>Connect Wallet</span>
+                      </button>
+                    )}
+                  </ConnectKitButton.Custom>
+                  <p className="text-center text-[10px] font-label text-outline uppercase tracking-widest">
+                    Your wallet signs the attestation data for Ledger Clear Signing.
+                    <br />The relay still submits the transaction — your identity stays private.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 bg-surface-container-lowest rounded-lg border border-secondary/20">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      check_circle
+                    </span>
+                    <span className="font-label text-xs text-secondary uppercase tracking-wider">
+                      Wallet Connected — Ledger will display attestation fields
+                    </span>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* Submit Action */}
           <div className="pt-4">
             <button
@@ -619,12 +720,13 @@ export default function AttestPage() {
               disabled={!receipt || !worldIdProof || status === "submitting"}
               className="w-full py-6 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/10 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <span>{status === "submitting" ? "Submitting to Relay..." : "Submit Attestation"}</span>
+              <span>{status === "submitting" ? (isConnected ? "Sign on Ledger & Submit..." : "Submitting to Relay...") : "Submit Attestation"}</span>
               <span className="material-symbols-outlined">send</span>
             </button>
             <p className="text-center mt-6 text-[10px] font-label text-outline uppercase tracking-widest leading-relaxed">
-              By submitting, you generate a non-interactive zero-knowledge proof<br />
-              of the transformations applied to this image.
+              {isConnected
+                ? "Your Ledger will display attestation details for Clear Signing.\nThe relay submits the transaction — your wallet is not exposed on-chain."
+                : "By submitting, your attestation is sent via anonymous relay.\nNo wallet connection required."}
             </p>
           </div>
 
