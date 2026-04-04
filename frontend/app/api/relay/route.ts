@@ -92,6 +92,7 @@ export async function POST(req: Request) {
         const metadata = {
           version: 1,
           pixelHash: body.pixelHash ?? "",
+          originalPixelHash: body.originalPixelHash ?? "",
           fileHash: body.fileHash ?? "",
           merkleRoot: body.merkleRoot ?? "",
           txHash: hash,
