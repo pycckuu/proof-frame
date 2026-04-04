@@ -8,7 +8,7 @@
 # ===========================================================================
 # Stage 1: Build the Rust host binary + compile guest ELF
 # ===========================================================================
-FROM rust:1.85-bookworm AS builder
+FROM rust:1.94-bookworm AS builder
 
 # Install system deps for RISC Zero + OpenSSL
 RUN apt-get update && apt-get install -y --no-install-recommends \
