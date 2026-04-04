@@ -242,14 +242,16 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 5: Contract Integration
 
-### T5.3 — Submit ZK Receipt to Contract `[ ]`
+### T5.3 — Deploy with Mock Verifier + Submit Receipt `[ ]`
 
-- [ ] Take receipt JSON from T5.1
-- [ ] Format for contract's `attestImage()` function
-- [ ] Submit on Sepolia
+- [ ] Deploy ImageAttestor with MockVerifier on Sepolia (USE_MOCK_VERIFIER=true)
+- [ ] Update contract address in `frontend/lib/contracts.ts` and `calldata-ImageAttestor.json`
+- [ ] Submit dev-mode receipt via relay API or `cast`
 - [ ] Verify: `isVerified(pixelHash)` returns true
 - [ ] Verify: `getAttestation(pixelHash)` returns correct fields
 - [ ] Verify: second submission of same pixelHash reverts
+
+**Note:** Mock verifier accepts any proof. Real Groth16 via RunPod is Phase 10.
 
 ---
 
@@ -388,6 +390,44 @@ T8 (Test Images) ─────────────────────
 
 ---
 
+## Phase 10: Real Groth16 Proofs (RunPod Serverless)
+
+### T10.1 — Docker Image for GPU Proving `[ ]`
+
+**Files:** `Dockerfile`, `handler.py`
+
+- [ ] Multi-stage Docker build: compile host binary with CUDA support, package with Python RunPod handler
+- [ ] Pre-compile guest ELF at build time (not runtime)
+- [ ] Python handler: decode base64 image, call Rust binary, return receipt JSON
+- [ ] Test locally with `RISC0_DEV_MODE=1`, then on RunPod with real GPU
+- [ ] Push to GHCR: `ghcr.io/pycckuu/proofframe-prover:latest`
+
+### T10.2 — RunPod Serverless Endpoint `[ ]`
+
+- [ ] Create RunPod serverless endpoint (RTX 4090, idle timeout 5 min, max workers 2)
+- [ ] Test via curl: submit image, poll status, get Groth16 receipt
+- [ ] Verify receipt is valid (real Groth16, not dev mode)
+
+### T10.3 — Frontend Prove API + UI `[ ]`
+
+**Files:** `frontend/app/api/prove/route.ts`, `frontend/app/api/prove/status/route.ts`, `frontend/app/attest/page.tsx`
+
+- [ ] `/api/prove` POST: submit image + config to RunPod, return jobId
+- [ ] `/api/prove/status` GET: poll RunPod status, return receipt when done
+- [ ] Attest page: "Generate Proof (GPU)" button with progress indicator
+- [ ] Keep manual receipt upload as fallback
+- [ ] Add env vars: `RUNPOD_API_KEY`, `RUNPOD_ENDPOINT_ID`
+
+### T10.4 — Redeploy with Real Verifier `[ ]`
+
+- [ ] Redeploy ImageAttestor pointing to RISC Zero Verifier Router (`0x925d8331...`)
+- [ ] Submit Groth16 receipt — verified by real on-chain verifier
+- [ ] Full E2E: frontend → RunPod GPU → Groth16 receipt → relay → Sepolia → verified
+
+**Cost:** ~$0.03-0.09 per proof on RTX 4090 (pay per second)
+
+---
+
 ## Key Risks
 
 1. **`image` crate riscv32im compilation** — highest risk. Fallback: pass raw pixels from host (weaker proof).
@@ -401,5 +441,5 @@ T8 (Test Images) ─────────────────────
 | Foundation | `cargo check -p proofframe-common` |
 | ZK Core | `RISC0_DEV_MODE=1 cargo run -p proofframe-host --release -- --image test_images/ethglobal_cannes.png` |
 | Contracts | `cd contracts && forge build && forge test` |
-| Frontend | `cd frontend && npm run build` |
+| Frontend | `cd frontend && bun run build` |
 | Privacy | `grep -r "msg.sender" contracts/src/` (should be zero identity checks) |
