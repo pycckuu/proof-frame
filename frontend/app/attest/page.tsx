@@ -207,6 +207,7 @@ export default function AttestPage() {
                 { name: "disclosedCameraMake", type: "string" },
                 { name: "imageWidth", type: "uint32" },
                 { name: "imageHeight", type: "uint32" },
+                { name: "ipfsCid", type: "string" },
               ],
             },
             primaryType: "AttestImage",
@@ -220,6 +221,7 @@ export default function AttestPage() {
               disclosedCameraMake: receipt.disclosedCameraMake || "",
               imageWidth: receipt.imageWidth,
               imageHeight: receipt.imageHeight,
+              ipfsCid: "",
             },
           });
         } catch (signErr) {

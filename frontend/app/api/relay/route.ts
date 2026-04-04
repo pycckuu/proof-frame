@@ -55,33 +55,7 @@ export async function POST(req: Request) {
       transport: http(process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org"),
     });
 
-    // 1. Submit attestation on-chain
-    const hash = await client.writeContract({
-      address: IMAGE_ATTESTOR_ADDRESS,
-      abi: IMAGE_ATTESTOR_ABI,
-      functionName: "attestImage",
-      args: [
-        body.seal as `0x${string}`,
-        body.journalDigest as `0x${string}`,
-        body.pixelHash as `0x${string}`,
-        body.fileHash as `0x${string}`,
-        body.merkleRoot as `0x${string}`,
-        body.transformDesc ?? "",
-        body.disclosedDate ?? "",
-        body.disclosedLocation ?? "",
-        body.disclosedCameraMake ?? "",
-        body.imageWidth ?? 0,
-        body.imageHeight ?? 0,
-        // World ID params — randomize nullifier when using mock to avoid DuplicateNullifier
-        BigInt(body.worldIdRoot || 0),
-        process.env.USE_MOCK_WORLD_ID === "true"
-          ? BigInt(`0x${Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, "0")).join("")}`)
-          : BigInt(body.worldIdNullifier || 0),
-        decodeWorldIdProof(body.worldIdProof),
-      ],
-    });
-
-    // 2. Upload proof package (image + metadata) to IPFS via Infura (optional)
+    // 1. Upload proof package (image + metadata) to IPFS FIRST (so CID is available for on-chain tx)
     let ipfsCid: string | null = null;
     if (body.image_base64 && process.env.INFURA_IPFS_PROJECT_ID) {
       try {
@@ -95,7 +69,6 @@ export async function POST(req: Request) {
           originalPixelHash: body.originalPixelHash ?? "",
           fileHash: body.fileHash ?? "",
           merkleRoot: body.merkleRoot ?? "",
-          txHash: hash,
           chain: "sepolia",
           contract: IMAGE_ATTESTOR_ADDRESS,
           transforms: body.transformDesc || "none",
@@ -129,6 +102,33 @@ export async function POST(req: Request) {
         console.error("IPFS upload failed (non-fatal):", ipfsErr);
       }
     }
+
+    // 2. Submit attestation on-chain (with IPFS CID stored in contract)
+    const hash = await client.writeContract({
+      address: IMAGE_ATTESTOR_ADDRESS,
+      abi: IMAGE_ATTESTOR_ABI,
+      functionName: "attestImage",
+      args: [
+        body.seal as `0x${string}`,
+        body.journalDigest as `0x${string}`,
+        body.pixelHash as `0x${string}`,
+        body.fileHash as `0x${string}`,
+        body.merkleRoot as `0x${string}`,
+        body.transformDesc ?? "",
+        body.disclosedDate ?? "",
+        body.disclosedLocation ?? "",
+        body.disclosedCameraMake ?? "",
+        body.imageWidth ?? 0,
+        body.imageHeight ?? 0,
+        ipfsCid ?? "",
+        // World ID params — randomize nullifier when using mock to avoid DuplicateNullifier
+        BigInt(body.worldIdRoot || 0),
+        process.env.USE_MOCK_WORLD_ID === "true"
+          ? BigInt(`0x${Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, "0")).join("")}`)
+          : BigInt(body.worldIdNullifier || 0),
+        decodeWorldIdProof(body.worldIdProof),
+      ],
+    });
 
     // 3. Create ENS subname via NameStone (optional)
     let ensName: string | null = null;

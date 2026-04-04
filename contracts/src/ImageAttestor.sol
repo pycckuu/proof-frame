@@ -19,6 +19,7 @@ contract ImageAttestor {
         string disclosedCameraMake;
         uint32 imageWidth;
         uint32 imageHeight;
+        string ipfsCid;
     }
 
     /// @notice The RISC Zero verifier contract (router on Sepolia)
@@ -77,6 +78,7 @@ contract ImageAttestor {
         string calldata disclosedCameraMake,
         uint32 imageWidth,
         uint32 imageHeight,
+        string calldata ipfsCid,
         // World ID params (required — anti-Sybil proof of personhood)
         uint256 worldIdRoot,
         uint256 worldIdNullifier,
@@ -120,7 +122,8 @@ contract ImageAttestor {
             disclosedLocation: disclosedLocation,
             disclosedCameraMake: disclosedCameraMake,
             imageWidth: imageWidth,
-            imageHeight: imageHeight
+            imageHeight: imageHeight,
+            ipfsCid: ipfsCid
         });
 
         // 5. Emit event

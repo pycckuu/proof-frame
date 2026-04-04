@@ -14,6 +14,7 @@ type Attestation = {
   disclosedCameraMake: string;
   imageWidth: number;
   imageHeight: number;
+  ipfsCid: string;
 };
 
 type VerifyStatus = "idle" | "hashing" | "checking" | "verified" | "not_verified" | "error";
@@ -90,6 +91,7 @@ export default function VerifyPage() {
           disclosedCameraMake: result.disclosedCameraMake,
           imageWidth: result.imageWidth,
           imageHeight: result.imageHeight,
+          ipfsCid: result.ipfsCid,
         });
         setStatus("verified");
 
