@@ -3,6 +3,16 @@ import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import { IMAGE_ATTESTOR_ABI, IMAGE_ATTESTOR_ADDRESS } from "@/lib/contracts";
 
+function buildDescription(body: Record<string, unknown>, ipfsCid: string | null): string {
+  const w = body.imageWidth ?? 0;
+  const h = body.imageHeight ?? 0;
+  const transforms = body.transformDesc && body.transformDesc !== "none"
+    ? `, transforms: ${body.transformDesc}`
+    : "";
+  const ipfs = ipfsCid ? " IPFS-pinned." : "";
+  return `ProofFrame ZK-attested image (${w}x${h}${transforms}).${ipfs} Verified on Sepolia.`;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -77,18 +87,29 @@ export async function POST(req: Request) {
         const subname = ipfsCid || hashPrefix;
 
         const textRecords: Record<string, string> = {
+          // Standard ENS records (rendered by ENS-aware apps)
+          ...(ipfsCid ? { avatar: `ipfs://${ipfsCid}` } : {}),
+          url: `https://proofframe.xyz/verify?hash=${(body.pixelHash ?? "").replace(/^0x/, "")}`,
+          description: buildDescription(body, ipfsCid),
+
+          // ProofFrame core attestation data
           "io.proofframe.pixelHash": body.pixelHash ?? "",
+          "io.proofframe.fileHash": body.fileHash ?? "",
+          "io.proofframe.merkleRoot": body.merkleRoot ?? "",
           "io.proofframe.txHash": hash,
           "io.proofframe.chain": "sepolia",
           "io.proofframe.contract": IMAGE_ATTESTOR_ADDRESS,
+          "io.proofframe.transforms": body.transformDesc || "none",
+          "io.proofframe.dimensions": `${body.imageWidth ?? 0}x${body.imageHeight ?? 0}`,
+          "io.proofframe.version": "1",
+          "io.proofframe.attestedAt": new Date().toISOString(),
+
+          // Conditional disclosed metadata
+          ...(body.disclosedDate ? { "io.proofframe.date": body.disclosedDate } : {}),
+          ...(body.disclosedLocation ? { "io.proofframe.location": body.disclosedLocation } : {}),
+          ...(body.disclosedCameraMake ? { "io.proofframe.camera": body.disclosedCameraMake } : {}),
+          ...(ipfsCid ? { "io.proofframe.image": `ipfs://${ipfsCid}` } : {}),
         };
-        if (body.disclosedDate)
-          textRecords["io.proofframe.date"] = body.disclosedDate;
-        if (body.disclosedLocation)
-          textRecords["io.proofframe.location"] = body.disclosedLocation;
-        if (body.disclosedCameraMake)
-          textRecords["io.proofframe.camera"] = body.disclosedCameraMake;
-        if (ipfsCid) textRecords["io.proofframe.image"] = `ipfs://${ipfsCid}`;
 
         const nsRes = await fetch(
           "https://namestone.com/api/public_v1/set-name",
@@ -102,6 +123,7 @@ export async function POST(req: Request) {
               domain,
               name: subname,
               address: "0x0000000000000000000000000000000000000000",
+              ...(ipfsCid ? { contenthash: `ipfs://${ipfsCid}` } : {}),
               text_records: textRecords,
             }),
           }

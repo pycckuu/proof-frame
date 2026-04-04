@@ -517,7 +517,7 @@ export default function AttestPage() {
                 )}
                 {ipfsCid && (
                   <a
-                    href={`https://ipfs.io/ipfs/${ipfsCid}`}
+                    href={`https://proof-frame.infura-ipfs.io/ipfs/${ipfsCid}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-label text-xs text-primary hover:underline break-all block"

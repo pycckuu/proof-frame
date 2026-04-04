@@ -288,29 +288,49 @@ export default function VerifyPage() {
                     </div>
                   </div>
 
+                  {/* ENS Description */}
+                  {ensTextRecords?.description && (
+                    <p className="font-body text-sm text-on-surface-variant/80 italic">
+                      {ensTextRecords.description}
+                    </p>
+                  )}
+
                   {/* ENS Text Records */}
                   {ensTextRecords && Object.keys(ensTextRecords).length > 0 && (
                     <div className="bg-surface-container-lowest rounded-lg p-4 space-y-2">
                       <p className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider mb-2">
                         ENS Text Records
                       </p>
-                      {Object.entries(ensTextRecords).map(([key, value]) => {
+                      {Object.entries(ensTextRecords)
+                        .filter(([key]) => key !== "description")
+                        .map(([key, value]) => {
                         const label = key.replace("io.proofframe.", "");
-                        const isLink = value.startsWith("ipfs://") || value.startsWith("0x");
+                        const isIpfs = value.startsWith("ipfs://");
+                        const isUrl = value.startsWith("http://") || value.startsWith("https://");
+                        const isHex = value.startsWith("0x");
                         return (
                           <div key={key} className="flex justify-between items-start gap-2">
                             <span className="font-label text-[10px] text-on-surface-variant/50 shrink-0">{label}</span>
-                            {value.startsWith("ipfs://") ? (
+                            {isIpfs ? (
                               <a
-                                href={`https://ipfs.io/ipfs/${value.replace("ipfs://", "")}`}
+                                href={`https://proof-frame.infura-ipfs.io/ipfs/${value.replace("ipfs://", "")}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="font-label text-[10px] text-primary hover:underline text-right break-all"
                               >
                                 {value}
                               </a>
+                            ) : isUrl ? (
+                              <a
+                                href={value}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-label text-[10px] text-primary hover:underline text-right break-all"
+                              >
+                                {value.length > 40 ? `${value.slice(0, 30)}...` : value}
+                              </a>
                             ) : (
-                              <span className={`font-label text-[10px] text-right break-all ${isLink ? "text-on-surface-variant/70 font-mono" : "text-on-surface"}`}>
+                              <span className={`font-label text-[10px] text-right break-all ${isHex ? "text-on-surface-variant/70 font-mono" : "text-on-surface"}`}>
                                 {value.length > 30 ? `${value.slice(0, 15)}...${value.slice(-10)}` : value}
                               </span>
                             )}

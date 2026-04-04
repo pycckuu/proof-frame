@@ -359,6 +359,16 @@ T8 (Test Images) ─────────────────────
 - [x] Display ENS name and IPFS link in attest success state
 - [x] Graceful fallbacks: skip IPFS if no Infura key, skip ENS if no NameStone key
 
+### T7.3 — Rich ENS Text Records `[x]`
+
+**Files:** `frontend/app/api/relay/route.ts`, `frontend/app/verify/page.tsx`
+
+- [x] Add standard ENS records: `avatar` (IPFS image), `url` (verify link), `description` (human-readable summary)
+- [x] Add ProofFrame core records: `fileHash`, `merkleRoot`, `transforms`, `dimensions`, `version`, `attestedAt`
+- [x] Total: 17 text records (3 standard ENS + 14 ProofFrame-specific) — up from 8
+- [x] Verify page: render `description` as prose summary, render `url` as clickable link, filter `description` from key-value list
+- [x] Privacy verified: no new records expose photographer identity (all data already public in journal)
+
 ---
 
 ### T7.2 — Ledger Demo Flow `[x]`
