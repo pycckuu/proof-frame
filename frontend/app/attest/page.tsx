@@ -243,7 +243,7 @@ export default function AttestPage() {
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/png,.png"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleImageFile(f);

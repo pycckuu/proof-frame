@@ -11,6 +11,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // Limit image size to ~15MB (20MB base64)
+    if (body.image_base64.length > 20 * 1024 * 1024) {
+      return Response.json(
+        { error: "Image too large. Maximum size is ~15MB." },
+        { status: 413 }
+      );
+    }
+
     const result = await prove({
       image_base64: body.image_base64,
       transform: body.transform || '"None"',
