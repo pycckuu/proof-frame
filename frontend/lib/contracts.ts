@@ -3,9 +3,9 @@ import { sepolia } from "viem/chains";
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 
-// Update this after deploying the contract
+// Deployed on Sepolia with MockVerifier (dev mode)
 export const IMAGE_ATTESTOR_ADDRESS =
-  "0x0000000000000000000000000000000000000000" as const;
+  "0x31B1f11EBDCB75c7D73674a80b7a52f6f1a61E80" as const;
 
 export const IMAGE_ATTESTOR_ABI = [
   {

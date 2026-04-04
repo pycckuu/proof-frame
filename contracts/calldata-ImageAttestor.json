@@ -6,7 +6,7 @@
       "deployments": [
         {
           "chainId": 11155111,
-          "address": "0x0000000000000000000000000000000000000000"
+          "address": "0x31B1f11EBDCB75c7D73674a80b7a52f6f1a61E80"
         }
       ],
       "abi": [
