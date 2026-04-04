@@ -246,12 +246,21 @@ fn main() -> Result<()> {
         .flat_map(|w| w.to_le_bytes())
         .collect();
     let receipt_bytes = bincode::serialize(&receipt).context("serializing receipt")?;
+    let journal_digest = hex::encode(Sha256::digest(&receipt.journal.bytes));
     let receipt_json = serde_json::json!({
         "receipt": hex::encode(&receipt_bytes),
         "journal": hex::encode(&receipt.journal.bytes),
+        "journal_digest": journal_digest,
         "pixel_hash": hex::encode(output.pixel_hash),
         "file_hash": hex::encode(output.file_hash),
         "image_id": hex::encode(&image_id_bytes),
+        "merkle_root": hex::encode(output.merkle_root),
+        "transform_desc": output.transform_desc,
+        "disclosed_date": output.disclosed_date.unwrap_or_default(),
+        "disclosed_location": output.disclosed_location.unwrap_or_default(),
+        "disclosed_camera_make": output.disclosed_camera_make.unwrap_or_default(),
+        "image_width": output.image_width,
+        "image_height": output.image_height,
     });
     std::fs::write(&receipt_path, serde_json::to_string_pretty(&receipt_json)?)
         .context("saving receipt")?;

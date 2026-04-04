@@ -26,6 +26,9 @@ export default function VerifyPage() {
   const [attestation, setAttestation] = useState<Attestation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [ensName, setEnsName] = useState<string | null>(null);
+  const [ipfsCid, setIpfsCid] = useState<string | null>(null);
+  const [ensTextRecords, setEnsTextRecords] = useState<Record<string, string> | null>(null);
 
   const handleFile = useCallback(async (f: File) => {
     setFile(f);
@@ -89,6 +92,34 @@ export default function VerifyPage() {
           imageHeight: result.imageHeight,
         });
         setStatus("verified");
+
+        // Look up ENS subname + text records from NameStone (non-blocking)
+        try {
+          const domain = process.env.NEXT_PUBLIC_ENS_DOMAIN || "proof-frame.eth";
+          const nsRes = await fetch(
+            `https://namestone.com/api/public_v1/get-names?domain=${domain}`
+          );
+          if (nsRes.ok) {
+            const names = await nsRes.json();
+            // Find the subname that has this pixelHash in its text records
+            const match = names.find(
+              (n: { text_records?: Record<string, string> }) =>
+                n.text_records?.["io.proofframe.pixelHash"] === `0x${pixelHash}`
+            );
+            if (match) {
+              setEnsName(`${match.name}.${domain}`);
+              if (match.text_records) {
+                setEnsTextRecords(match.text_records);
+                const imgRecord = match.text_records["io.proofframe.image"];
+                if (imgRecord) {
+                  setIpfsCid(imgRecord.replace("ipfs://", ""));
+                }
+              }
+            }
+          }
+        } catch {
+          // ENS lookup is optional — don't fail verification
+        }
       } else {
         setStatus("not_verified");
       }
@@ -238,6 +269,58 @@ export default function VerifyPage() {
                 <HashField icon="fingerprint" label="File Hash" value={attestation.fileHash} />
                 <HashField icon="account_tree" label="Merkle Root" value={attestation.merkleRoot} />
               </div>
+
+              {/* ENS Subname + Text Records */}
+              {ensName && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-primary text-sm">badge</span>
+                    <div>
+                      <p className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider">ENS Name</p>
+                      <a
+                        href={`https://app.ens.domains/${ensName}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-label text-xs text-primary hover:underline"
+                      >
+                        {ensName}
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* ENS Text Records */}
+                  {ensTextRecords && Object.keys(ensTextRecords).length > 0 && (
+                    <div className="bg-surface-container-lowest rounded-lg p-4 space-y-2">
+                      <p className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider mb-2">
+                        ENS Text Records
+                      </p>
+                      {Object.entries(ensTextRecords).map(([key, value]) => {
+                        const label = key.replace("io.proofframe.", "");
+                        const isLink = value.startsWith("ipfs://") || value.startsWith("0x");
+                        return (
+                          <div key={key} className="flex justify-between items-start gap-2">
+                            <span className="font-label text-[10px] text-on-surface-variant/50 shrink-0">{label}</span>
+                            {value.startsWith("ipfs://") ? (
+                              <a
+                                href={`https://ipfs.io/ipfs/${value.replace("ipfs://", "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-label text-[10px] text-primary hover:underline text-right break-all"
+                              >
+                                {value}
+                              </a>
+                            ) : (
+                              <span className={`font-label text-[10px] text-right break-all ${isLink ? "text-on-surface-variant/70 font-mono" : "text-on-surface"}`}>
+                                {value.length > 30 ? `${value.slice(0, 15)}...${value.slice(-10)}` : value}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Trust Badge */}
               <div className="bg-secondary/5 border border-secondary/10 p-4 rounded-xl flex items-center justify-between">
