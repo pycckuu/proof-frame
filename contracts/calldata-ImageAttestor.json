@@ -1,7 +1,7 @@
 {
   "$schema": "https://erc7730.ethereum.org/schema.json",
   "context": {
-    "eip712": null,
+    "$id": "ProofFrame ImageAttestor",
     "contract": {
       "deployments": [
         {
@@ -13,6 +13,7 @@
         {
           "name": "attestImage",
           "type": "function",
+          "stateMutability": "nonpayable",
           "inputs": [
             { "name": "seal", "type": "bytes" },
             { "name": "journalDigest", "type": "bytes32" },
@@ -36,12 +37,13 @@
     "info": {
       "legalName": "ProofFrame",
       "url": "https://proofframe.eth",
-      "description": "Zero-knowledge image authenticity attestation"
+      "description": "Zero-knowledge image authenticity attestation. Proves photos are real without revealing the photographer."
     }
   },
   "display": {
     "formats": {
-      "attestImage": {
+      "0x203f9663": {
+        "$id": "attestImage",
         "intent": "Attest Image Authenticity",
         "fields": [
           {
@@ -56,37 +58,37 @@
           },
           {
             "path": "merkleRoot",
-            "label": "Trust Registry Root",
+            "label": "Trust Registry",
             "format": "raw"
           },
           {
             "path": "transformDesc",
-            "label": "Transforms Applied",
+            "label": "Transforms",
             "format": "raw"
           },
           {
             "path": "disclosedDate",
-            "label": "Date (if disclosed)",
+            "label": "Date",
             "format": "raw"
           },
           {
             "path": "disclosedLocation",
-            "label": "Location (if disclosed)",
+            "label": "Location",
             "format": "raw"
           },
           {
             "path": "disclosedCameraMake",
-            "label": "Camera (if disclosed)",
+            "label": "Camera",
             "format": "raw"
           },
           {
             "path": "imageWidth",
-            "label": "Width",
+            "label": "Width (px)",
             "format": "raw"
           },
           {
             "path": "imageHeight",
-            "label": "Height",
+            "label": "Height (px)",
             "format": "raw"
           }
         ]
