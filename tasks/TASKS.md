@@ -139,7 +139,7 @@ T8 (Test Images) ─────────────────────
 - [ ] `frontend/app/api/relay/route.ts` — Relayer API:
   - Receive seal + journal from client
   - Submit `attestImage()` tx from `RELAYER_PRIVATE_KEY`
-  - Call NameStone API for ENS subname
+  - Contract creates ENS subname on-chain via NameWrapper
   - Return tx hash + ENS name
 - [ ] `frontend/lib/imageHash.ts` — Client-side pixel hashing:
   - Load image into canvas
@@ -156,9 +156,9 @@ T8 (Test Images) ─────────────────────
 
 **Depends on: T4, T6**
 
-- [ ] ENS: NameStone SDK integration in relayer API
-  - Create subname: `photo-001.proofframe.eth`
-  - Set text records: `io.proofframe.proof`, `io.proofframe.date`, etc.
+- [x] ENS: On-chain NameWrapper integration in attestImage()
+  - Create subname: `{label}.proof-frame.eth` on-chain via NameWrapper
+  - Set text records: `io.proofframe.pixelHash`, `io.proofframe.fileHash`, etc.
 - [ ] Ledger: ERC-7730 Clear Signing JSON (`calldata-ImageAttestor.json`)
   - Human-readable display of attestImage() parameters on Ledger screen
   - Validate: `erc7730 lint calldata-ImageAttestor.json`
@@ -182,9 +182,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-## Optional Tasks (Post-MVP)
+## Completed
 
-- [ ] **Chainlink CRE**: Workflow to fetch camera manufacturer keys via Confidential HTTP
-- [x] **World ID**: Contract integration (IWorldIDGroups, optional verification, nullifier tracking), IDKit widget in frontend, relay route updated, ERC-7730 updated
-- [ ] **Real Proofs**: Generate Groth16 proofs with GPU or Boundless
-- [ ] **Demo Video**: Record 3-minute demo for ETHGlobal submission
+- [x] **World ID**: Contract integration (IWorldIDGroups, per-image nullifier tracking), IDKit widget in frontend, relay route updated, ERC-7730 updated
+- [x] **ENS**: On-chain subdomains via NameWrapper + text records via Public Resolver

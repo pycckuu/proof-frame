@@ -283,32 +283,19 @@ Subnames like `{ipfs-cid-prefix}.proof-frame.eth` are created with text records
 (pixelHash, fileHash, ipfsCid) set via the Public Resolver. No photographer wallet involved —
 the contract itself is the subdomain creator. Previous NameStone/CCIP-Read approach replaced.
 
-### 4.8 Local-First Trust Registry (MVP)
+### 4.8 Local Trust Registry
 
-**Problem:** The original design used Chainlink CRE to fetch camera manufacturer keys from an
-external trust registry via Confidential HTTP (TEE). This adds complexity and an external
-dependency that isn't needed for the hackathon MVP.
+**Decision:** The host program contains a hardcoded list of 3-5 mock secp256k1 public keys.
+The host builds a Merkle tree from these keys at proof generation time.
 
-**Decision:** MVP uses a hardcoded list of 3-5 mock secp256k1 public keys compiled into the
-host program. The host builds a Merkle tree from these keys at proof generation time.
-
-**Why this works:** The guest program is completely agnostic to how the Merkle tree was built.
+**How it works:** The guest program is agnostic to how the Merkle tree was built.
 It receives `(merkle_root, merkle_proof, pubkey)` as private inputs and verifies:
 1. `sha256(pubkey)` is in the tree at `merkle_root` via `merkle_proof`
 2. The ECDSA signature was made by `pubkey`
 
 The guest doesn't know or care whether the keys came from a hardcoded list, a database,
-or a Chainlink CRE workflow. This makes CRE a pure bolt-on enhancement:
-
-**Upgrade path to CRE:**
-- Replace hardcoded keys in host with CRE-fetched keys
-- Same Merkle tree construction, same interface, same guest program
-- Same contract — it only sees the `merkle_root` in the journal
-- Zero changes to guest, contract, or frontend
-
-**For judges:** "The trust registry is modular. For the hackathon we use a curated key list.
-In production, Chainlink CRE fetches manufacturer keys via Confidential HTTP — same Merkle
-tree, same ZK proof, same contract. The privacy guarantees are identical at every trust level."
+or an external service. The trust registry is modular — the same Merkle tree interface
+works with any key source. Only the host's key list needs to change.
 
 ### 4.7 Ledger role: Clear Signing on transactions + narrative
 
@@ -385,7 +372,7 @@ In production, these merge — the Ledger's key enters the ZK proof directly."
 3. **World ID:** Required — per-image nullifier, anti-Sybil verification
 4. **No identity storage:** The `Attestation` struct has NO `address attester` field
 5. **Verifier delegation:** Uses `IRiscZeroVerifier` interface to the deployed router
-6. **Two-phase deployment:** Phase 1 uses MockVerifier (accepts any proof, for demo flow). Phase 2 uses real Verifier Router with Groth16 proofs via RunPod GPU.
+6. **MockVerifier deployment:** Uses MockVerifier (accepts any proof) with dev-mode proofs for the demo flow.
 
 ### Contract addresses (Sepolia)
 
@@ -573,22 +560,7 @@ This is near-perfect alignment.
 
 **Requirement:** "Present at the ENS booth in person on Sunday morning." MANDATORY.
 
-### Chainlink ($7K pool — Privacy Standard track) — OPTIONAL, NOT IN MVP
-
-**Status:** Not required for MVP. The trust registry uses hardcoded mock keys (see 4.8).
-CRE is a bolt-on enhancement that replaces hardcoded keys with TEE-fetched keys.
-
-**Integration (if time permits):** CRE workflow with Confidential HTTP
-- Fetches camera manufacturer trust registry via private API call
-- API credentials stay inside TEE — never exposed
-- Returns Merkle root of authorized keys on-chain
-- `cre workflow simulate` output is sufficient for the bounty
-- Per bounty: "Our team will deploy it to live CRE for you"
-
-**Upgrade path:** Replace hardcoded keys in host → CRE-fetched keys. Same Merkle tree,
-same guest, same contract. Zero architectural changes needed.
-
-### World ID ($20K pool — IMPLEMENTED)
+### World ID — IMPLEMENTED
 
 **Status:** Integrated. Optional anti-Sybil verification for attestations.
 
@@ -606,19 +578,16 @@ same guest, same contract. Zero architectural changes needed.
 
 ---
 
-## 12. TRUST LEVELS — BE HONEST WITH JUDGES
+## 12. TRUST MODEL
 
-| Trust Level | What signs | What it proves | When available |
-|-------------|-----------|----------------|----------------|
-| **Level 1** (hackathon) | Mock software key | "A registered signer committed to this image" — reputation model | Now |
-| **Level 2** (production) | Ledger hardware key | "A hardware device approved this" — key theft resistance | With Keccak precompile in ZK |
-| **Level 3** (production) | C2PA camera key | "An authorized camera CAPTURED this" — true provenance | When Leica/Sony/Nikon keys integrated |
+| What signs | What it proves |
+|-----------|----------------|
+| Mock software key (secp256k1) | "A registered signer committed to this image" — reputation model. If a signer attests fakes, their key gets revoked from the trust registry. |
 
-**The honest line for judges:**
-"With software signing, this is a reputation system — if a signer attests fakes, their key
-gets revoked. The same ZK pipeline works with C2PA camera signatures. When we plug in
-Leica or Sony factory keys, the proof upgrades from reputation to capture-level trust.
-Our contribution is the privacy layer that works at every trust level."
+**C2PA simulation:** The host generates a fresh secp256k1 key at runtime and signs the file
+with raw ECDSA over SHA-256. This mocks what a C2PA-enabled camera would do (ECDSA-P256 over
+SHA-256 of the signed payload). The ZK guest verifies this signature identically regardless of
+key origin — the pipeline is key-agnostic, only the Merkle root changes.
 
 ---
 
@@ -642,7 +611,7 @@ content provenance by August 2026 — we need proof without surveillance."
 
 **2:00-2:30 — Three disclosure levels:** Full / Partial / Maximum privacy (pre-verified)
 
-**2:30-2:50 — Integrations:** Ledger Clear Signing, ENS subnames, Chainlink CRE simulation
+**2:30-2:50 — Integrations:** Ledger Clear Signing, ENS on-chain subnames, World ID
 
 **2:50-3:00 — Close:** "ProofFrame: fight disinformation with proof, not surveillance."
 
@@ -688,11 +657,11 @@ proofframe/
 │   └── calldata-ImageAttestor.json     # ERC-7730 Clear Signing
 │
 ├── frontend/
-│   ├── package.json                    # next, wagmi, viem, idkit, namestone
+│   ├── package.json                    # next, wagmi, viem, idkit
 │   ├── app/
-│   │   ├── page.tsx                    # TODO: Landing page
-│   │   ├── attest/page.tsx             # TODO: Upload → configure → attest
-│   │   ├── verify/page.tsx             # TODO: Upload → hash → verify
+│   │   ├── page.tsx                    # Landing page
+│   │   ├── attest/page.tsx             # Upload → configure → attest
+│   │   ├── verify/page.tsx             # Upload → hash → verify
 │   │   └── api/relay/route.ts          # Relayer: submit tx anonymously
 │   └── lib/
 │       ├── contracts.ts                # ABI + addresses
@@ -714,8 +683,7 @@ proofframe/
 |-------------|-------------|---------------|--------------|
 | 2h at Phase 2 | EXIF in VM → parse on host only (Option A) | Slightly weaker proof chain | Everything else |
 | 3h at Phase 3 | On-chain ENS subnames → skip text records | Per-image ENS names | ENS subnames still created |
-| 5h at Phase 3 | Chainlink CRE entirely | $2K bounty | Ledger + ENS + core ZK |
-| 6h at Phase 3 | World ID entirely | $8K bounty | Already conditional |
+| 6h at Phase 3 | World ID entirely | World ID bounty | Core ZK still works |
 | 8h+ at Phase 4 | Dev-mode proofs only | "Real" proof demo | Explain "real proofs take N min" |
 | Nuclear | Skip transforms, hash-only | Weaker demo | Still valid ZK content auth |
 
@@ -786,7 +754,7 @@ RISC0_INFO=1                  # Show cycle counts
 
 3. **Journal encoding mismatch** — if the guest commits fields in order A,B,C but the contract encodes A,C,B, verification ALWAYS fails. Use identical field ordering.
 
-4. **Groth16 requires x86 + GPU** — Apple Silicon cannot generate Groth16 locally. Use RunPod Serverless (RTX 4090, ~$0.03-0.09/proof) or dev-mode with MockVerifier for the demo. See `docs/TASKS.md` Phase 10.
+4. **Groth16 requires x86 + GPU** — Apple Silicon cannot generate Groth16 locally. Dev-mode with MockVerifier is used for the demo.
 
 5. **PNG orientation** — the `image` crate does NOT apply EXIF Orientation tag. Photos from phones may appear rotated after decode. Accept this for hackathon.
 

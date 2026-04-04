@@ -20,7 +20,7 @@ graph TB
 
     subgraph CHAIN["⛓️ Ethereum Sepolia"]
         CONTRACT[ImageAttestor.sol<br/>Verify ZK proof<br/>Verify World ID<br/>Store attestation]
-        ENS[ENS Text Records<br/>+ NameStone Subnames<br/>{ipfs-cid}.proof-frame.eth<br/>+ IPFS CID in text records]
+        ENS[ENS Text Records<br/>+ On-chain NameWrapper Subnames<br/>{label}.proof-frame.eth<br/>+ IPFS CID in text records]
     end
 
     subgraph STORAGE["📦 Decentralized Storage"]
@@ -35,10 +35,10 @@ graph TB
 
     PHOTO --> CONFIG
     CONFIG --> GUEST
-    WORLDID -.->|optional anti-Sybil| RELAY
+    WORLDID -->|anti-Sybil proof| RELAY
     GUEST -->|seal + journal| RELAY
     RELAY -->|attestImage tx| CONTRACT
-    RELAY -->|NameStone API| ENS
+    RELAY -->|attestImage tx| ENS
     RELAY -->|upload clean PNG| IPFS
     CONTRACT --> ATTEST
     GUEST -->|re-encode pixels| CLEAN
@@ -235,38 +235,21 @@ graph TB
 
 ---
 
-## 6. Trust Levels — Honest Assessment
+## 6. Trust Model
 
 ```mermaid
 graph LR
-    subgraph L1["Level 1: Hackathon"]
+    subgraph L1["Current: Software Key"]
         L1S["Mock software key<br/>signs file hash"]
         L1P["Proves: registered signer<br/>committed to this image"]
         L1T["Trust: REPUTATION<br/>Revoke key if signer attests fakes"]
     end
 
-    subgraph L2["Level 2: Production"]
-        L2S["Ledger hardware key<br/>in secure element"]
-        L2P["Proves: hardware device<br/>approved this content"]
-        L2T["Trust: KEY THEFT RESISTANCE<br/>Can't extract key remotely"]
-    end
-
-    subgraph L3["Level 3: Full C2PA"]
-        L3S["Camera factory key<br/>Leica/Sony/Nikon"]
-        L3P["Proves: authorized camera<br/>CAPTURED this image"]
-        L3T["Trust: CAPTURE PROOF<br/>Photographer never touches key"]
-    end
-
-    L1 -->|"upgrade path"| L2
-    L2 -->|"upgrade path"| L3
-
     style L1 fill:#fef3c7,stroke:#d97706,color:#1a1a1a
-    style L2 fill:#dbeafe,stroke:#2563eb,color:#1a1a1a
-    style L3 fill:#d1fae5,stroke:#059669,color:#1a1a1a
 ```
 
-> **Same ZK pipeline at all 3 levels.** Only the signing key changes.
-> ProofFrame's contribution is the privacy layer that works at every trust level.
+> The ZK pipeline is key-agnostic — only the Merkle root changes.
+> ProofFrame's contribution is the privacy layer that works regardless of what key signs the content.
 
 ---
 
@@ -279,11 +262,11 @@ sequenceDiagram
     participant R as 📡 Relayer API
     participant C as ⛓️ Contract
     participant I as 📦 IPFS (Infura)
-    participant N as 📛 NameStone
+    participant N as 📛 ENS NameWrapper
 
     J->>F: Upload photo + config
     F->>F: Generate ZK proof locally
-    Note over F: Proof generation happens<br/>on photographer's device or<br/>RunPod GPU (Phase 10)
+    Note over F: Proof generation happens<br/>on photographer's device or<br/>server-side via /api/prove
 
     opt World ID (anti-Sybil)
         J->>F: World ID scan (IDKit QR)
@@ -302,8 +285,8 @@ sequenceDiagram
     R->>I: Upload clean PNG
     I->>R: IPFS CID (ipfs://Qm...)
 
-    R->>N: Create subname + text records
-    Note over R,N: Text records include:<br/>pixelHash, txHash, IPFS CID,<br/>disclosed date/location/camera
+    C->>N: Create subname + text records
+    Note over C,N: On-chain via NameWrapper:<br/>pixelHash, txHash, IPFS CID,<br/>disclosed date/location/camera
 
     R->>F: {txHash, ensName, ipfsCid}
     F->>J: Show result + ENS name + IPFS link
@@ -325,32 +308,26 @@ graph TB
         LED_AI["Content authenticator<br/>EIP-712 signing on Ledger<br/>wagmi + ConnectKit<br/>→ $6K AI Agents track"]
     end
 
-    subgraph ENS_S["📛 ENS ($10K pool)"]
+    subgraph ENS_S["📛 ENS"]
         ENS_TR["Text records<br/>pixelHash, txHash, date<br/>location, camera, IPFS CID"]
-        ENS_SUB["Gasless subnames<br/>{ipfs-cid}.proof-frame.eth<br/>via NameStone + CCIP-Read"]
+        ENS_SUB["On-chain subnames<br/>{label}.proof-frame.eth<br/>via NameWrapper"]
         ENS_IPFS["IPFS integration<br/>Clean PNG at ipfs://Qm...<br/>via Infura pinning"]
         ENS_NOTE["'Most Creative' track<br/>ZK proofs + IPFS images<br/>in ENS text records"]
     end
 
-    subgraph CL["🔗 Chainlink ($7K pool)"]
-        CRE["CRE Workflow<br/>Confidential HTTP<br/>Trust registry fetch"]
-    end
-
-    subgraph WID["🌍 World ID ($20K pool)"]
-        WID_P["signal = pixelHash<br/>Anti-Sybil per image<br/>IMPLEMENTED (optional)"]
+    subgraph WID["🌍 World ID"]
+        WID_P["signal = pixelHash<br/>Anti-Sybil per image<br/>Per-image nullifier scoping"]
     end
 
     ZK --> CONTRACT
     CONTRACT --> LED_CS
     CONTRACT --> ENS_TR
     CONTRACT --> ENS_SUB
-    ZK --> CRE
     CONTRACT --> WID_P
 
     style CORE fill:#ede9fe,stroke:#7c3aed,color:#1a1a1a
     style LEDGER fill:#dbeafe,stroke:#2563eb,color:#1a1a1a
     style ENS_S fill:#d1fae5,stroke:#059669,color:#1a1a1a
-    style CL fill:#f3f4f6,stroke:#6b7280,color:#1a1a1a
     style WID fill:#fef3c7,stroke:#d97706,color:#1a1a1a
 ```
 
@@ -445,7 +422,7 @@ graph TB
     end
 
     subgraph DOCS["Documentation"]
-        ARCH["docs/FULL_ARCHITECTURE.md<br/>📖 Single source of truth"]
+        ARCH["docs/ARCHITECTURE.md<br/>📖 Single source of truth"]
         PRIV["docs/PRIVACY.md"]
     end
 
@@ -490,8 +467,7 @@ gantt
     Upload + verify UI         :p3b, after p3a, 4h
 
     section Phase 4: Polish
-    Chainlink CRE              :p4a, after p3b, 2h
-    Clear Signing JSON         :p4b, after p4a, 1h
+    Clear Signing JSON         :p4b, after p3b, 1h
     Pre-compute proofs         :crit, p4c, after p4b, 3h
 
     section Phase 5: Demo
@@ -510,15 +486,13 @@ graph TB
     START["Hours behind<br/>schedule?"]
 
     START -->|"2h behind<br/>at Phase 2"| CUT1["Cut: EXIF in VM<br/>→ Parse on host only"]
-    START -->|"3h behind<br/>at Phase 3"| CUT2["Cut: NameStone subnames<br/>→ Plain text records"]
-    START -->|"5h behind<br/>at Phase 3"| CUT3["Cut: Chainlink CRE<br/>Lose: $2K bounty"]
-    START -->|"6h behind<br/>at Phase 3"| CUT4["Cut: World ID<br/>Lose: $8K bounty"]
+    START -->|"3h behind<br/>at Phase 3"| CUT2["Cut: ENS subnames<br/>→ Plain text records"]
+    START -->|"6h behind<br/>at Phase 3"| CUT4["Cut: World ID"]
     START -->|"8h+ behind<br/>at Phase 4"| CUT5["Cut: Real proofs<br/>→ Dev-mode only"]
     START -->|"Nuclear"| CUT6["Cut: Transforms<br/>→ Hash-only verification"]
 
     CUT1 --> SAFE["✅ Project still works"]
     CUT2 --> SAFE
-    CUT3 --> SAFE
     CUT4 --> SAFE
     CUT5 --> SAFE
     CUT6 --> SAFE

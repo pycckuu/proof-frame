@@ -96,7 +96,7 @@ Before committing, verify ALL of these:
 - [ ] Journal contains only: pixel_hash, file_hash, merkle_root, transforms, disclosed metadata
 - [ ] Frontend attest flow has NO wallet connection
 - [ ] Relayer API uses server-side wallet (RELAYER_PRIVATE_KEY)
-- [ ] ENS subnames created by relayer (NameStone API), not photographer wallet
+- [ ] ENS subnames created on-chain by contract (NameWrapper), not photographer wallet
 - [ ] Re-encoded PNG has zero metadata (decoded from pixels only)
 - [ ] No EXIF/XMP/IPTC/C2PA data in any output
 

@@ -13,7 +13,7 @@ AI-generated images and deepfakes are the backbone of modern disinformation. C2P
 ## How It Works
 
 1. **Photographer uploads a photo** with all its metadata (GPS, date, camera info)
-2. A signing key creates an ECDSA signature over the file — this key is in a Merkle tree of authorized signers
+2. A **mock signing key** creates an ECDSA signature over the file (simulates a C2PA camera signature — in production this would be the camera's own key). The signing key is in a Merkle tree of authorized signers
 3. **Inside RISC Zero's zkVM**, the guest program:
    - Verifies the ECDSA signature is valid *(private — never leaves the VM)*
    - Checks the signing key belongs to the authorized set *(private — only the Merkle root is revealed)*
@@ -41,23 +41,18 @@ flowchart TD
     CAM["Camera / Phone"]
     LED["Ledger HW wallet"]
     ORB["World ORB"]
-    CRE["Chainlink CRE"]
-    TR[("Trust Registry")]
-
-    CRE -- "fetch keys via TEE" --> TR
 
     subgraph DEVICE [" Photographer's Device "]
         A1["Take PNG photo"]
         A2["Choose what to reveal"]
         A3["Sign with ECDSA key"]
-        A4{{"World ID?"}}
+        A4{{"World ID"}}
         A1 --> A2 --> A3 --> A4
     end
 
     CAM -- "capture" --> A1
     LED -- "sign" --> A3
-    ORB -. "scan" .-> A4
-    TR -- "Merkle tree" --> B2
+    ORB -- "scan" --> A4
 
     subgraph ZK [" RISC Zero zkVM "]
         B1["Verify ECDSA sig"]
@@ -133,7 +128,7 @@ The photographer's identity is hidden at **every layer**:
 | **ZK proof** | Signing key is a private input. Proof reveals only "some key in this Merkle tree" |
 | **World ID** | Nullifier hash is unlinkable across images. Proves "a unique human" not "which human" |
 | **Image file** | Published PNG re-encoded from pixels. Zero metadata survives decode |
-| **ENS subnames** | Created by relayer via NameStone API. No photographer wallet involved |
+| **ENS subnames** | Created on-chain by contract via NameWrapper. No photographer wallet involved |
 | **Network** | Photographer only talks to relayer API. Can use Tor/VPN |
 
 ### Selective Disclosure
@@ -151,21 +146,19 @@ Disclosed fields are **verified by the ZK proof** — they came from the signed 
 
 ---
 
-## Trust Levels
+## Trust Model
 
-| Level | What signs | What it proves | Status |
-|-------|-----------|----------------|--------|
-| **1. Hackathon** | Mock software key | "A registered signer committed to this" — reputation model | ✅ Built |
-| **2. Production** | Ledger hardware key | "A hardware device approved this" — key theft resistance | Roadmap |
-| **3. Full C2PA** | Camera factory key (Leica/Sony/Nikon) | "An authorized camera captured this" — true provenance | Roadmap |
+| What signs | What it proves |
+|-----------|----------------|
+| Mock software key (secp256k1) | "A registered signer committed to this image" — reputation model. If a signer attests fakes, their key gets revoked from the trust registry. |
 
-The same ZK pipeline works at all three levels. Only the signing key changes. ProofFrame's contribution is the **privacy layer** that works regardless of trust level.
+**Note on C2PA simulation:** The current implementation generates a fresh secp256k1 key at runtime and signs the file with raw ECDSA over SHA-256. This mocks what a C2PA-enabled camera would do — the ZK guest verifies the signature identically regardless of key origin. The pipeline is key-agnostic; only the Merkle root changes when swapping key sources.
 
 ---
 
 ## What Metadata Gets Stripped
 
-A single JPEG/PNG from a modern camera contains dozens of identifying data points. ProofFrame strips all of them by decoding to raw pixels inside the ZK VM:
+A single PNG from a modern camera contains dozens of identifying data points. ProofFrame strips all of them by decoding to raw pixels inside the ZK VM:
 
 | Metadata | What it contains | Risk |
 |----------|------------------|------|
@@ -212,28 +205,24 @@ cd contracts
 forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast
 
 # 6. Run frontend
-cd frontend && npm install && npm run dev
+cd frontend && bun install && bun run dev
 ```
 
 ---
 
 ## Sponsor Integrations
 
-### Ledger — Hardware Trust ($10K pool)
+### Ledger — Hardware Trust
 
-ERC-7730 Clear Signing JSON for `attestImage()` displays human-readable fields on the Ledger screen. Positions Ledger as a content authenticity device — every photographer becomes a potential Ledger customer.
+EIP-712 typed data signing for `attestImage()` displays human-readable attestation fields on the Ledger screen via Clear Signing. ERC-7730 descriptor included (`calldata-ImageAttestor.json`). Positions Ledger as a content authenticity device. Wallet connection is optional — attestation works without it via anonymous relay.
 
-### ENS — Discovery Layer ($10K pool)
+### ENS — Discovery Layer
 
-ZK proof hashes stored as text records (`io.proofframe.proof`). Gasless per-image subnames via NameStone + CCIP-Read. The bounty literally asks for *"store ZK proofs in text records."*
+On-chain subdomains via NameWrapper: `{label}.proof-frame.eth` created atomically inside `attestImage()`. Text records set on-chain via Public Resolver: `io.proofframe.pixelHash`, `fileHash`, `ipfsCid`, disclosed metadata. The bounty asks for *"store ZK proofs in text records"* — this delivers exactly that, fully on-chain.
 
-### Chainlink — Trust Registry ($7K pool) — Optional
+### World ID — Anti-Sybil
 
-CRE Workflow with Confidential HTTP fetches camera manufacturer keys. API credentials stay inside TEE. MVP uses a local hardcoded trust registry; CRE is a bolt-on upgrade with the same Merkle tree interface.
-
-### World ID — Anti-Sybil ($20K pool, conditional)
-
-`signal = keccak256(pixelHash)` binds human verification to specific image content. Relayer-compatible.
+`signal = keccak256(pixelHash)` binds human verification to specific image content. Per-image nullifier scoping prevents the same human from attesting the same image twice. Relayer-compatible — World ID's `verifyProof` does not check `msg.sender`.
 
 ---
 
@@ -258,7 +247,7 @@ CRE Workflow with Confidential HTTP fetches camera manufacturer keys. API creden
 | Signature | Raw ECDSA / SHA-256 | Ethereum `personal_sign` uses Keccak (not accelerated in zkVM) |
 | Image format | PNG only | Lossless + integer-only decode (no float-heavy JPEG DCT) |
 | Submission | Permissionless relayer | `msg.sender` irrelevant; contract checks only proof validity |
-| ENS | NameStone subnames | CCIP-Read, gasless, project-level auth, no photographer wallet |
+| ENS | On-chain NameWrapper subdomains | Atomic with attestation, text records via Public Resolver |
 
 ---
 
@@ -284,14 +273,13 @@ ProofFrame is the missing layer: proof without surveillance. Authenticity that f
 
 | Document | Contents |
 |----------|----------|
-| [Full Architecture](docs/FULL_ARCHITECTURE.md) | Complete technical reference — 700+ lines covering every decision, crate version, cycle count, and pitfall |
-| [Diagrams](docs/DIAGRAMS.md) | 13 Mermaid architecture diagrams (renders on GitHub) |
+| [Architecture](docs/ARCHITECTURE.md) | Complete technical reference — every decision, crate version, cycle count, and pitfall |
+| [Diagrams](docs/DIAGRAMS.md) | Mermaid architecture diagrams (renders on GitHub) |
 | [Privacy Analysis](docs/PRIVACY.md) | Layer-by-layer privacy guarantees and threat model |
-| [Decision Records](docs/ARCHITECTURE.md) | Why each architectural choice was made |
-| [Tasks](TASKS.md) | Ordered implementation checklist for the hackathon |
+| [Tasks](docs/TASKS.md) | Implementation checklist |
 
 ---
 
 ## License
 
-TO BE DISCLOSED
+MIT

@@ -48,7 +48,7 @@ Photographer device → [image_bytes + config]
 - PNG only (no JPEG — DCT needs float, no FPU in riscv32im)
 - Permissionless relayer (no msg.sender checks in contract)
 - Patched crates for RISC Zero precompiles (sha2, k256, crypto-bigint)
-- Local trust registry for MVP (hardcoded mock keys, not Chainlink CRE)
+- Local trust registry (hardcoded mock keys, Merkle tree built at proof generation)
 
 ### Phase 2: Multi-Perspective Analysis
 
