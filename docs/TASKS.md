@@ -255,7 +255,7 @@ T8 (Test Images) ─────────────────────
 
 ## Phase 6: Frontend
 
-### T6.1 — Project Setup + Landing Page `[ ]`
+### T6.1 — Project Setup + Landing Page `[x]`
 
 **Files:** `frontend/app/layout.tsx`, `frontend/app/page.tsx`, config files
 
@@ -268,7 +268,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T6.2 — imageHash.ts `[ ]`
+### T6.2 — imageHash.ts `[x]`
 
 **Files:** `frontend/lib/imageHash.ts`
 
@@ -282,7 +282,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T6.3 — contracts.ts `[ ]`
+### T6.3 — contracts.ts `[x]`
 
 **Files:** `frontend/lib/contracts.ts`
 
@@ -293,7 +293,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T6.4 — Verify Page `[ ]`
+### T6.4 — Verify Page `[x]`
 
 **Files:** `frontend/app/verify/page.tsx`
 
@@ -305,7 +305,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T6.5 — Attest Page `[ ]`
+### T6.5 — Attest Page `[x]`
 
 **Files:** `frontend/app/attest/page.tsx`
 
@@ -319,7 +319,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-### T6.6 — Relay API Route `[ ]`
+### T6.6 — Relay API Route `[x]`
 
 **Files:** `frontend/app/api/relay/route.ts`
 
