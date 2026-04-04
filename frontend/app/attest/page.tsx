@@ -20,6 +20,7 @@ type Receipt = {
   disclosedCameraMake: string;
   imageWidth: number;
   imageHeight: number;
+  transformedImage_base64?: string;
 };
 
 type SubmitStatus = "idle" | "submitting" | "confirmed" | "error";
@@ -183,24 +184,15 @@ export default function AttestPage() {
     setError(null);
 
     try {
-      // Step 1: Upload image to IPFS (so CID is available for signing + on-chain tx)
-      let image_base64: string | undefined;
+      // Step 1: Upload transformed image (clean.png) to IPFS
       let uploadedIpfsCid = "";
-      if (file) {
-        const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        let binary = "";
-        for (let i = 0; i < bytes.length; i++) {
-          binary += String.fromCharCode(bytes[i]);
-        }
-        image_base64 = btoa(binary);
-
+      if (receipt.transformedImage_base64) {
         try {
           const uploadRes = await fetch(`${API_BASE}/api/upload`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              image_base64,
+              image_base64: receipt.transformedImage_base64,
               ...receipt,
               originalPixelHash: pixelHash ? `0x${pixelHash}` : undefined,
             }),
