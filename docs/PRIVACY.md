@@ -22,7 +22,7 @@ prove your photo is real without revealing anything about yourself.
 1. **On-chain:** `msg.sender` is the relayer address, shared across ALL users
 2. **ZK proof:** Signing key is a private input — proof reveals only Merkle root
 3. **World ID:** Nullifier is scoped to `(app_id, action_id)` — different per image, unlinkable
-4. **ENS:** Subnames created by NameStone API (project key, not photographer wallet)
+4. **ENS:** Subnames created on-chain by contract via NameWrapper (relayer tx, not photographer wallet)
 5. **Image file:** Re-encoded from decoded pixels — zero metadata survives
 
 ## Trust model for disclosed metadata

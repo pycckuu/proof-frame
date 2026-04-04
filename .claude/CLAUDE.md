@@ -12,8 +12,7 @@ Photographer's device (PRIVATE):
   2. Upload to ProofFrame web app
   3. Configure transforms + disclosure policy
   4. Click "Generate Proof" → POST /api/prove
-     - Dev: runs host binary with RISC0_DEV_MODE=1 (local, ~3s)
-     - Prod: calls RunPod Serverless GPU (Phase 10, ~60s)
+     - Runs host binary with RISC0_DEV_MODE=1 (local, ~3s)
   5. Receipt auto-loaded
   6. World ID scan (IDKit QR) → required anti-Sybil proof of personhood
   7. Click "Submit to Chain"
@@ -56,15 +55,17 @@ system if it doesn't expose them. Privacy enables adoption, adoption fights fake
 4. **Chain:** Ethereum Sepolia
 5. **Submission:** Permissionless relayer — contract only checks proof validity
 6. **ENS:** On-chain subdomains via NameWrapper (setSubnodeRecord + setText in attestImage())
-7. **Trust Registry:** Local-first. MVP uses hardcoded mock keys; Chainlink CRE is optional bolt-on
+7. **Trust Registry:** Hardcoded mock keys in host program, Merkle tree built at proof generation time
 
-## What's Optional (Not in MVP)
+## Feature Status
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Chainlink CRE** | Optional | Trust registry uses hardcoded keys for MVP. CRE fetches keys from external registries — same interface, bolt-on later |
-| **World ID** | Required | Fully implemented. Per-image nullifier scoping — same human can attest different images but not the same image twice |
-| **JPEG support** | Not planned | DCT is float-heavy. PNG only at hackathon |
+| **ZK Proving** | Implemented | Dev-mode proofs via RISC0_DEV_MODE=1, MockVerifier on Sepolia |
+| **World ID** | Implemented | Per-image nullifier scoping — same human can attest different images but not the same image twice |
+| **ENS Subdomains** | Implemented | On-chain via NameWrapper + text records via Public Resolver |
+| **Ledger Clear Signing** | Implemented | EIP-712 typed data signing + ERC-7730 descriptor |
+| **IPFS Upload** | Implemented | Clean PNG pinned via Infura |
 
 ## Patched Crate Versions (MANDATORY)
 
@@ -111,7 +112,7 @@ proofframe/
 │   ├── test/ImageAttestor.t.sol
 │   └── calldata-ImageAttestor.json # ERC-7730 Clear Signing (Ledger)
 ├── frontend/
-│   ├── package.json                # next, wagmi, viem, namestone
+│   ├── package.json                # next, wagmi, viem, idkit
 │   ├── app/
 │   │   ├── page.tsx                # Landing page
 │   │   ├── attest/page.tsx         # Upload → configure → attest
@@ -142,34 +143,24 @@ proofframe/
 5. **PNG orientation** — `image` crate does NOT apply EXIF Orientation tag. Phone photos may appear rotated.
 6. **RISC Zero v3.0.5+** — earlier versions have a critical memory vulnerability. Always use 3.0.5+.
 
-## Implementation Phases
+## Components
 
-### Phase 1: ZK Core (T1-T3)
-Common types → Guest program → Host program → Test in dev mode
+- **ZK Core** (T1-T3): Common types, guest program, host program — all working in dev mode
+- **Contracts + Relayer** (T4): ImageAttestor.sol deployed to Sepolia with MockVerifier
+- **Frontend + ENS** (T6-T7): Upload UI, transform controls, disclosure selector, verify flow, on-chain ENS subnames
+- **Integration** (T5, T7-T8): E2E tested, Ledger Clear Signing, World ID, IPFS upload
 
-### Phase 2: Contracts + Relayer (T4)
-ImageAttestor.sol → Deploy to Sepolia → Relayer API
+## Sponsor Integrations
 
-### Phase 3: Frontend + ENS (T6-T7)
-Upload UI → Transform controls → Disclosure selector → Verify flow → ENS subnames
-
-### Phase 4: Integration + Polish (T5, T7-T8)
-E2E testing → Ledger Clear Signing → Pre-compute proofs → Demo prep
-
-## Sponsor Targets
-
-| Sponsor | Track | Value | Integration |
-|---------|-------|-------|-------------|
-| Ledger | Clear Signing | $4K | ERC-7730 JSON for attestImage() |
-| Ledger | AI Agents | $6K | "Ledger as content authenticator" |
-| ENS | Most Creative | $5K | ZK proofs in text records + subnames |
-| Chainlink | Privacy Standard | $2K | CRE workflow (OPTIONAL, bolt-on) |
-| World | World ID 4.0 | $8K | CONDITIONAL — signal=pixelHash |
+| Sponsor | Track | Integration |
+|---------|-------|-------------|
+| Ledger | Clear Signing + AI Agents | ERC-7730 descriptor + EIP-712 typed data signing via wagmi/ConnectKit |
+| ENS | Most Creative | On-chain subdomains via NameWrapper + text records (pixelHash, fileHash, ipfsCid) |
+| World | World ID | Per-image nullifier scoping, signal=pixelHash, IDKit widget |
 
 ## Contract Addresses (Sepolia)
 
-- **ImageAttestor (current dev):** `0x7Ec0Bc3Af8927dB9D31Bb23F28aE3c642C23Ed6f` (MockVerifier + MockWorldID, ipfsCid on-chain, per-image nullifier, on-chain ENS subdomains via NameWrapper with text records)
-- **ImageAttestor (real verifier):** `0x4A09aB58D8fb7CC0786e5331E57f8d9FB39C9E2b` (Real Verifier Router, Groth16)
+- **ImageAttestor:** `0x7Ec0Bc3Af8927dB9D31Bb23F28aE3c642C23Ed6f` (MockVerifier + MockWorldID, ipfsCid on-chain, per-image nullifier, on-chain ENS subdomains via NameWrapper with text records)
 - RISC Zero Verifier Router: `0x925d8331ddc0a1F0d96E68CF073DFE1d92b69187`
 - World ID Router: `0x469449f251692e0779667583026b5a1e99512157`
 - ENS NameWrapper: `0x0635513f179D50A207757E05759CbD106d7dFcE8`

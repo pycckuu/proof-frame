@@ -1,6 +1,6 @@
 # ProofFrame — Implementation Tasks (Sequential)
 
-> Status: `[ ]` = TODO, `[~]` = In Progress, `[x]` = Done
+> Status: `[x]` = Done, `[—]` = Cut, `[~]` = In Progress
 
 ## Test Image & Signing Key
 
@@ -251,7 +251,7 @@ T8 (Test Images) ─────────────────────
 - [x] Submit dev-mode receipt via `cast` — tx `0x82fb0913...`
 - [x] Verify: `isVerified(pixelHash)` returns true
 
-**Note:** Mock verifier accepts any proof. Real Groth16 via RunPod is Phase 10.
+**Note:** Mock verifier accepts any proof. Dev-mode proofs used for the demo.
 
 ---
 
@@ -261,12 +261,12 @@ T8 (Test Images) ─────────────────────
 
 **Files:** `frontend/app/layout.tsx`, `frontend/app/page.tsx`, config files
 
-- [ ] `npm install` in frontend directory
+- [ ] `bun install` in frontend directory
 - [ ] Create Next.js App Router layout with Tailwind CSS
 - [ ] Create `tailwind.config.js`, `postcss.config.js`, `tsconfig.json`
 - [ ] Landing page: project name, description, "Attest" and "Verify" nav buttons
 
-**Verify:** `cd frontend && npm run dev`
+**Verify:** `cd frontend && bun run dev`
 
 ---
 
@@ -402,7 +402,7 @@ T8 (Test Images) ─────────────────────
 - [x] Verify: verified state (glassmorphic shield + attestation details), not-verified state (blurred image + error overlay)
 - [x] All business logic preserved (image hashing, receipt upload, contract verification, relay API)
 
-**Verify:** `cd frontend && npm run build` (all pages compile successfully)
+**Verify:** `cd frontend && bun run build` (all pages compile successfully)
 
 ---
 
@@ -414,7 +414,7 @@ T8 (Test Images) ─────────────────────
 
 - [ ] Create `lib/prover.ts` with provider abstraction: `prove(req) → ProveResult`
 - [ ] Local provider: runs host binary via `execFile` with `RISC0_DEV_MODE=1`
-- [ ] RunPod provider: placeholder for Phase 10
+- [ ] RunPod provider: placeholder (cut — using local dev mode)
 - [ ] `/api/prove` POST route: accepts image_base64 + transform + disclosure
 - [ ] Enhance host receipt output: add merkleRoot, disclosed fields, journalDigest
 - [ ] Attest page: "Generate Proof" button replaces receipt upload, auto-populates receipt
@@ -445,7 +445,7 @@ T8 (Test Images) ─────────────────────
 
 ---
 
-## Phase 10: Proof Generation (Dev Mode — Local)
+## Proof Generation (Dev Mode — Local)
 
 > **Decision:** RunPod serverless GPU proving was attempted but abandoned for the hackathon
 > due to persistent worker initialization failures (container pull timeouts, CUDA driver
@@ -459,12 +459,11 @@ T8 (Test Images) ─────────────────────
 - [x] GitHub Actions: `.github/workflows/docker-prover.yml` builds and pushes to GHCR
 - [x] Image: `ghcr.io/pycckuu/proofframe-prover:latest` (dev mode, no CUDA)
 
-### T10.2 — RunPod Endpoint `[~]` (blocked)
+### T10.2 — RunPod Endpoint `[—]` (cut)
 
 - [x] Created endpoint `proofframe-prover` (ID: `8wd9ln9rr730ji`)
 - [x] Config: max workers 1, active workers 0, idle timeout 5s, 10 GB disk
-- [ ] **BLOCKED:** Workers stuck in "Initializing" state — container pull never completes
-- [ ] Post-hackathon: debug RunPod container pull, try CPU worker type, or switch to Fly.io
+- [—] Workers stuck in "Initializing" state — container pull never completed. Cut in favor of local dev-mode proving.
 
 ### T10.3 — Local Proof Generation (Hackathon Fallback) `[x]`
 
@@ -473,12 +472,9 @@ T8 (Test Images) ─────────────────────
 - [x] Contract: `0xCb102D1c761960F63de87959019D4865d4F6F1d6` (MockVerifier + MockWorldID)
 - [x] Frontend prover abstraction supports both local and RunPod backends
 
-### T10.4 — Real Verifier (Post-Hackathon) `[ ]`
+### T10.4 — Real Verifier `[—]` (cut)
 
-- [ ] Fix RunPod worker initialization or switch to alternative GPU provider
-- [ ] Build with `--features cuda` for real Groth16 proving
-- [ ] Redeploy contract with real RISC Zero Verifier Router (`0x925d8331...`)
-- [ ] E2E: frontend → GPU prover → Groth16 receipt → relay → Sepolia → verified on-chain
+- [—] Real Groth16 proving requires GPU infrastructure. Cut for hackathon — using MockVerifier + dev-mode proofs.
 
 ---
 
@@ -507,12 +503,9 @@ T8 (Test Images) ─────────────────────
 - [x] Dev mode proof generation via `proofframe-host` binary with `RISC0_DEV_MODE=1`
 - [x] URL: `https://proofframe.fly.dev`
 
-### T11.3 — Upload to IPFS + Set ENS Contenthash `[ ]`
+### T11.3 — Upload to IPFS + Set ENS Contenthash `[—]` (cut)
 
-- [ ] Build static: `STATIC_EXPORT=true NEXT_PUBLIC_API_BASE=https://app.vercel.app bun run build:static`
-- [ ] Upload `frontend/out/` to IPFS (w3cli, Pinata, or Fleek)
-- [ ] Set contenthash on proof-frame.eth via app.ens.domains
-- [ ] Verify: `https://proof-frame.eth.limo` loads all pages
+- [—] Static export works (`STATIC_EXPORT=true bun run build:static`) but IPFS hosting and ENS contenthash setup were cut for hackathon. App deployed on Fly.io instead.
 
 ---
 
