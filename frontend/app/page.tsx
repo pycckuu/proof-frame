@@ -18,7 +18,8 @@ export default function Home() {
           <p className="text-lg text-on-surface-variant max-w-xl leading-relaxed">
             AI fakes are everywhere. C2PA proves photos are real but exposes the photographer.{" "}
             <span className="text-on-surface font-medium">ProofFrame</span> uses ZK proofs to verify
-            authenticity without compromising your privacy or revealing identity metadata.
+            authenticity and edits — crop, adjust, convert — while proving no pixels were tampered.
+            All without revealing your identity.
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
             <Link
@@ -59,7 +60,7 @@ export default function Home() {
               </div>
               <div className="flex-grow">
                 <div className="font-label text-xs text-primary-fixed uppercase tracking-widest mb-1">ZK Generation</div>
-                <div className="text-sm text-on-surface-variant">Obfuscate identity, prove pixels</div>
+                <div className="text-sm text-on-surface-variant">Verify edits, strip metadata, prove pixels</div>
               </div>
               <span className="material-symbols-outlined text-outline-variant">trending_flat</span>
             </div>
@@ -96,21 +97,22 @@ export default function Home() {
           {/* Large Feature */}
           <div className="md:col-span-2 bg-surface-container-low rounded-xl p-12 flex flex-col justify-between min-h-[400px] border border-outline-variant/10">
             <div>
-              <h3 className="text-3xl font-bold mb-4">Cryptographic Redaction</h3>
+              <h3 className="text-3xl font-bold mb-4">Verified Edits</h3>
               <p className="text-on-surface-variant leading-relaxed max-w-md">
-                Standard metadata (EXIF) contains GPS, timestamps, and device serials. ProofFrame allows you to redact
-                this sensitive information while proving that the image was not altered.
+                Crop, adjust brightness, convert to grayscale — and the ZK proof guarantees these are the only changes made.
+                No deepfakes, no pixel manipulation. EXIF metadata (GPS, timestamps, device serials) is selectively disclosed
+                or stripped entirely.
               </p>
             </div>
             <div className="mt-8 flex gap-2 overflow-hidden">
               <div className="w-24 h-24 rounded-lg bg-surface-container flex-shrink-0 border border-outline-variant/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-outline-variant">location_off</span>
+                <span className="material-symbols-outlined text-outline-variant">crop</span>
               </div>
               <div className="w-24 h-24 rounded-lg bg-surface-container flex-shrink-0 border border-outline-variant/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-outline-variant">person_off</span>
+                <span className="material-symbols-outlined text-outline-variant">contrast</span>
               </div>
               <div className="w-24 h-24 rounded-lg bg-surface-container flex-shrink-0 border border-outline-variant/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-outline-variant">visibility_off</span>
+                <span className="material-symbols-outlined text-outline-variant">verified</span>
               </div>
             </div>
           </div>
