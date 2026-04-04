@@ -248,6 +248,7 @@ export default function AttestPage() {
         body: JSON.stringify({
           ...receipt,
           image_base64,
+          originalPixelHash: pixelHash ? `0x${pixelHash}` : undefined,
           worldIdRoot: worldIdProof?.merkle_root || "0",
           worldIdNullifier: worldIdProof?.nullifier_hash || "0",
           worldIdProof: worldIdProof?.proof || undefined,
