@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProofFrame — ETHGlobal Cannes 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0f;
+  --bg2: #12121a;
+  --surface: #1a1a28;
+  --border: #2a2a3a;
+  --text: #e8e6e3;
+  --text-dim: #8a8896;
+  --accent: #00ff88;
+  --accent2: #00ccff;
+  --danger: #ff3355;
+  --warn: #ffaa00;
+  --purple: #a855f7;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.deck {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6vh 8vw;
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  pointer-events: none;
+  overflow-y: auto;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.slide.exit {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+/* Noise overlay */
+.deck::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Scanline effect */
+.deck::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* ─── Slide 1: Problem ─── */
+.s1-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4vw;
+  align-items: center;
+}
+
+.s1-left h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+}
+
+.s1-left h1 .highlight {
+  color: var(--danger);
+  position: relative;
+}
+
+.s1-left h1 .highlight::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--danger);
+  opacity: 0.5;
+}
+
+.s1-subtitle {
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  color: var(--text-dim);
+  line-height: 1.7;
+  max-width: 540px;
+  margin-bottom: 2rem;
+}
+
+.s1-stat-row {
+  display: flex;
+  gap: 2rem;
+}
+
+.s1-stat {
+  border-left: 3px solid var(--danger);
+  padding-left: 1rem;
+}
+
+.s1-stat .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.s1-stat .label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 0.25rem;
+}
+
+.s1-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.c2pa-leak {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(0.65rem, 1.1vw, 0.85rem);
+  position: relative;
+  overflow: hidden;
+}
+
+.c2pa-leak::before {
+  content: 'C2PA MANIFEST — EXPOSED';
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.55rem;
+  padding: 3px 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 0 7px 0 6px;
+}
+
+.c2pa-leak .line {
+  display: flex;
+  gap: 0.5rem;
+  padding: 2px 0;
+}
+
+.c2pa-leak .key { color: var(--text-dim); min-width: 110px; }
+.c2pa-leak .val { color: var(--danger); }
+.c2pa-leak .val.safe { color: var(--accent); }
+
+.problem-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 51, 85, 0.1);
+  border: 1px solid rgba(255, 51, 85, 0.3);
+  border-radius: 100px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  color: var(--danger);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Slide 2: Solution ─── */
+.s2-header {
+  margin-bottom: 3rem;
+}
+
+.s2-header .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.s2-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
+
+.s2-header h1 span { color: var(--accent); }
+
+.s2-header .sub {
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+  color: var(--text-dim);
+  max-width: 700px;
+}
+
+.s2-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.pillar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.pillar:hover { border-color: var(--accent); }
+
+.pillar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.pillar:nth-child(1)::before { background: var(--danger); }
+.pillar:nth-child(2)::before { background: var(--accent); }
+.pillar:nth-child(3)::before { background: var(--purple); }
+
+.pillar .icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.pillar h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.pillar:nth-child(1) h3 { color: var(--danger); }
+.pillar:nth-child(2) h3 { color: var(--accent); }
+.pillar:nth-child(3) h3 { color: var(--purple); }
+
+.pillar ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pillar li {
+  font-size: clamp(0.7rem, 1.1vw, 0.82rem);
+  color: var(--text-dim);
+  padding-left: 1.2rem;
+  position: relative;
+  line-height: 1.5;
+}
+
+.pillar li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+.s2-bottom {
+  margin-top: 2rem;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+/* ─── Slide 3: How It Works ─── */
+.s3-header {
+  margin-bottom: 2rem;
+}
+
+.s3-header .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent2);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.s3-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.flow-pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.flow-step {
+  flex: 1;
+  min-width: 140px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1.2rem 1rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flow-step:first-child { border-radius: 10px 0 0 10px; }
+.flow-step:last-child { border-radius: 0 10px 10px 0; }
+
+.flow-step::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid var(--border);
+  z-index: 10;
+}
+
+.flow-step:last-child::after { display: none; }
+
+.flow-step .step-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--accent2);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.flow-step .step-title {
+  font-size: clamp(0.75rem, 1.2vw, 0.9rem);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.flow-step .step-desc {
+  font-size: clamp(0.6rem, 0.9vw, 0.72rem);
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.flow-step:nth-child(1) { border-top: 3px solid var(--warn); }
+.flow-step:nth-child(2) { border-top: 3px solid var(--purple); }
+.flow-step:nth-child(3) { border-top: 3px solid var(--accent2); }
+.flow-step:nth-child(4) { border-top: 3px solid var(--warn); }
+.flow-step:nth-child(5) { border-top: 3px solid var(--accent); }
+.flow-step:nth-child(6) { border-top: 3px solid #ff6b9d; }
+.flow-step:nth-child(7) { border-top: 3px solid var(--danger); }
+
+.s3-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.insight-box {
+  background: rgba(0, 204, 255, 0.05);
+  border: 1px solid rgba(0, 204, 255, 0.2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+
+.insight-box h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--accent2);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.insight-box p {
+  font-size: clamp(0.75rem, 1.1vw, 0.88rem);
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.insight-box p strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sponsors-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sponsor-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sponsor-chip .prize {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+
+/* ─── Navigation ─── */
+.nav {
+  position: fixed;
+  bottom: 2.5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.6rem;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 0.5rem 1rem;
+}
+
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.nav-dot.active {
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+}
+
+.slide-counter {
+  position: fixed;
+  top: 3vh;
+  right: 4vw;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  z-index: 100;
+}
+
+.logo {
+  position: fixed;
+  top: 3vh;
+  left: 4vw;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  z-index: 100;
+}
+
+.logo span { color: var(--text-dim); font-weight: 400; }
+
+/* ─── Animations ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide.active .animate {
+  animation: fadeUp 0.5s ease forwards;
+  opacity: 0;
+}
+
+.slide.active .d1 { animation-delay: 0.1s; }
+.slide.active .d2 { animation-delay: 0.2s; }
+.slide.active .d3 { animation-delay: 0.3s; }
+.slide.active .d4 { animation-delay: 0.4s; }
+.slide.active .d5 { animation-delay: 0.5s; }
+.slide.active .d6 { animation-delay: 0.6s; }
+
+/* Glowing accent line */
+.glow-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  margin: 1.5rem 0;
+  opacity: 0.4;
+}
+
+@media (max-width: 900px) {
+  .s1-grid { grid-template-columns: 1fr; }
+  .s2-pillars { grid-template-columns: 1fr; }
+  .s3-bottom-grid { grid-template-columns: 1fr; }
+  .flow-pipeline { flex-direction: column; }
+  .flow-step::after { display: none; }
+  .flow-step { border-radius: 8px !important; }
+  .slide { padding: 4vh 5vw; }
+}
+</style>
+</head>
+<body>
+
+<div class="logo">PROOFFRAME <span>/ ETHGlobal Cannes 2026</span></div>
+<div class="slide-counter" id="counter">01 / 03</div>
+
+<div class="deck" id="deck">
+
+  <!-- ════════ SLIDE 1: THE PROBLEM ════════ -->
+  <div class="slide active" data-slide="0">
+    <div class="s1-grid">
+      <div class="s1-left">
+        <div class="problem-badge animate d1">THE MISINFORMATION CRISIS</div>
+        <h1 class="animate d2">
+          Every image is<br>now <span class="highlight">suspect</span>
+        </h1>
+        <p class="s1-subtitle animate d3">
+          AI generates photorealistic war zones, politicians, disasters. No one can tell real from fake. The existing fix — C2PA — proves photos are real but <strong style="color:var(--danger)">exposes the photographer</strong>.
+        </p>
+        <div class="s1-stat-row animate d4">
+          <div class="s1-stat">
+            <div class="num">96%</div>
+            <div class="label">of deepfakes go<br>undetected</div>
+          </div>
+          <div class="s1-stat">
+            <div class="num">Aug '26</div>
+            <div class="label">EU AI Act<br>deadline</div>
+          </div>
+          <div class="s1-stat">
+            <div class="num">€35M</div>
+            <div class="label">max penalty for<br>non-compliance</div>
+          </div>
+        </div>
+      </div>
+      <div class="s1-right">
+        <div class="c2pa-leak animate d3">
+          <div class="line"><span class="key">Signed by:</span><span class="val">Nikon Corporation</span></div>
+          <div class="line"><span class="key">Camera S/N:</span><span class="val">4002917</span></div>
+          <div class="line"><span class="key">Lens S/N:</span><span class="val">20058734</span></div>
+          <div class="line"><span class="key">GPS:</span><span class="val">43.5528°N, 7.0174°E</span></div>
+          <div class="line"><span class="key">Creator:</span><span class="val">John Smith</span></div>
+          <div class="line"><span class="key">Cert chain:</span><span class="val">CN=Nikon → GlobalSign CA</span></div>
+          <div class="line"><span class="key">Thumbnail:</span><span class="val">uncropped_face.jpg</span></div>
+        </div>
+        <div class="c2pa-leak animate d4" style="border-color: var(--accent); opacity: 0.9;">
+          <div style="position:absolute;top:0;right:0;background:var(--accent);color:#0a0a0f;font-size:0.55rem;padding:3px 10px;letter-spacing:0.15em;text-transform:uppercase;border-radius:0 7px 0 6px;font-weight:700;">PROOFFRAME — PROTECTED</div>
+          <div class="line"><span class="key">Signed by:</span><span class="val safe">●●● (authorized signer)</span></div>
+          <div class="line"><span class="key">Camera S/N:</span><span class="val safe">hidden</span></div>
+          <div class="line"><span class="key">GPS:</span><span class="val safe">Cannes, France (city only)</span></div>
+          <div class="line"><span class="key">Creator:</span><span class="val safe">hidden</span></div>
+          <div class="line"><span class="key">Verified:</span><span class="val safe">✓ real camera, untampered</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ SLIDE 2: THE SOLUTION ════════ -->
+  <div class="slide" data-slide="1">
+    <div class="s2-header animate d1">
+      <div class="tag">the solution</div>
+      <h1>Prove it's real. <span>Stay anonymous.</span></h1>
+      <p class="sub">ProofFrame uses zero-knowledge proofs to verify content authenticity — proving a real camera captured this image, not an AI — while keeping the photographer completely private.</p>
+    </div>
+
+    <div class="s2-pillars">
+      <div class="pillar animate d2">
+        <div class="icon">🔴</div>
+        <h3>Not AI-generated</h3>
+        <ul>
+          <li>Camera's secure element signs at capture</li>
+          <li>ZK proof verifies hardware signature inside zkVM</li>
+          <li>Checked against manufacturer device registry</li>
+          <li>No AI model can forge a camera signature</li>
+        </ul>
+      </div>
+      <div class="pillar animate d3">
+        <div class="icon">🟢</div>
+        <h3>Verified edits only</h3>
+        <ul>
+          <li>Crop, brightness, grayscale — proven in ZK</li>
+          <li>No pixel manipulation or splicing possible</li>
+          <li>Transform chain committed to proof output</li>
+          <li>Mathematically guaranteed integrity</li>
+        </ul>
+      </div>
+      <div class="pillar animate d4">
+        <div class="icon">🟣</div>
+        <h3>Selective disclosure</h3>
+        <ul>
+          <li>Photographer, location, date, device — reveal or hide each independently</li>
+          <li>All metadata stripped inside ZK VM by default</li>
+          <li>World ID: one human per attestation, no identity link</li>
+          <li>Relayer submits — wallet never touches chain</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="s2-bottom animate d5">
+      Privacy enables adoption → adoption fights fakes → trust returns to real content
+    </div>
+  </div>
+
+  <!-- ════════ SLIDE 3: HOW IT WORKS ════════ -->
+  <div class="slide" data-slide="2">
+    <div class="s3-header animate d1">
+      <div class="tag">technical architecture</div>
+      <h1>Seven steps from capture to verification</h1>
+    </div>
+
+    <div class="flow-pipeline animate d2">
+      <div class="flow-step">
+        <div class="step-num">Step 1</div>
+        <div class="step-title">Camera signs</div>
+        <div class="step-desc">Hardware secure element creates ECDSA signature over file hash. Proves physical device, not AI.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">Step 2</div>
+        <div class="step-title">ZK proof</div>
+        <div class="step-desc">RISC Zero zkVM verifies sig, decodes image, applies transforms, hashes pixels. All private.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">Step 3</div>
+        <div class="step-title">World ID</div>
+        <div class="step-desc">Orb-verified human bound to this image. Anti-Sybil. Unlinkable nullifier per attestation.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">Step 4</div>
+        <div class="step-title">Ledger signs</div>
+        <div class="step-desc">ERC-7730 Clear Signing displays attestation fields on Ledger screen. EIP-712 typed data. Physical button press.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">Step 5</div>
+        <div class="step-title">On-chain</div>
+        <div class="step-desc">Relayer submits proofs. Contract verifies ZK proof + World ID. Stores pixelHash + IPFS CID. Creates ENS subdomain.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">Step 6</div>
+        <div class="step-title">ENS records</div>
+        <div class="step-desc">On-chain subdomain via NameWrapper. Text records: pixelHash, fileHash, ipfsCid, url, avatar, contenthash.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">Step 7</div>
+        <div class="step-title">Verify</div>
+        <div class="step-desc">Anyone: upload image → hash pixels → check contract or ENS → verified or not.</div>
+      </div>
+    </div>
+
+    <div class="s3-bottom-grid">
+      <div class="insight-box animate d3">
+        <h4>Key insight for judges</h4>
+        <p><strong>AI can generate photorealistic images, but cannot forge a hardware camera signature.</strong> ProofFrame moves the trust anchor from "who posted this" to "what device captured this" — and ZK proofs verify that without revealing the device owner.</p>
+      </div>
+      <div class="insight-box animate d4" style="border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.05);">
+        <h4 style="color: var(--purple);">Sponsor integrations</h4>
+        <div class="sponsors-row" style="margin-top: 0.5rem;">
+          <div class="sponsor-chip">World ID <span class="prize">$20K</span></div>
+          <div class="sponsor-chip">ENS <span class="prize">$10K</span></div>
+          <div class="sponsor-chip">Ledger <span class="prize">$10K</span></div>
+        </div>
+        <p style="margin-top: 0.75rem; font-size: 0.78rem;">EU AI Act Art. 50 — content provenance mandatory by <strong style="color: var(--warn);">August 2, 2026</strong></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="nav" id="nav">
+  <div class="nav-dot active" data-goto="0"></div>
+  <div class="nav-dot" data-goto="1"></div>
+  <div class="nav-dot" data-goto="2"></div>
+</div>
+
+<script>
+let current = 0;
+const total = 3;
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.nav-dot');
+const counter = document.getElementById('counter');
+
+function goTo(n) {
+  if (n < 0 || n >= total || n === current) return;
+  slides[current].classList.remove('active');
+  slides[current].classList.add('exit');
+  setTimeout(() => slides[current === n ? current : (current)].classList.remove('exit'), 600);
+  
+  const prev = current;
+  current = n;
+  
+  setTimeout(() => {
+    slides[prev].classList.remove('exit');
+  }, 100);
+  
+  slides[current].classList.add('active');
+  
+  dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+});
+
+dots.forEach(d => d.addEventListener('click', () => goTo(+d.dataset.goto)));
+
+let touchStartX = 0;
+document.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+document.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) goTo(current + (diff > 0 ? 1 : -1));
+});
+</script>
+</body>
+</html>
