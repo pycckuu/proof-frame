@@ -3,18 +3,34 @@
 @tailwind utilities;
 
 body {
-  background-color: #0a0a0a;
-  color: #fafafa;
+  background-color: #131313;
+  color: #e5e2e1;
+  font-family: 'Inter', sans-serif;
 }
 
-/* Custom scrollbar for dark theme */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.glass-panel {
+  background: rgba(53, 53, 52, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at top right, rgba(173, 198, 255, 0.08), transparent 40%),
+              radial-gradient(circle at bottom left, rgba(74, 225, 118, 0.05), transparent 40%);
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #1c1b1b;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: #353534;
   border-radius: 4px;
 }

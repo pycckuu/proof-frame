@@ -367,6 +367,26 @@ T8 (Test Images) ─────────────────────
 
 ---
 
+## Phase 9: Design System
+
+### T9.1 — Apply Stitch "CipherGrain" Design System `[x]`
+
+**Files:** `frontend/tailwind.config.js`, `frontend/app/globals.css`, `frontend/app/layout.tsx`, `frontend/app/page.tsx`, `frontend/app/attest/page.tsx`, `frontend/app/verify/page.tsx`, `frontend/app/components/Navigation.tsx` (new), `frontend/app/components/Footer.tsx` (new)
+
+- [x] Tailwind config: M3 color tokens, custom border radii, font families, @tailwindcss/forms
+- [x] Global CSS: glass-panel, hero-gradient utilities, Material Symbols, updated scrollbar
+- [x] Layout: Inter + Space Grotesk fonts, Material Symbols, dark class, shared Nav + Footer
+- [x] Navigation: sticky nav with ProofFrame logo, active link state via usePathname
+- [x] Footer: "Powered by RISC Zero zkVM · Ethereum Sepolia" + links
+- [x] Landing: hero section with flow diagram, bento grid features, CTA buttons
+- [x] Attest: 2-column layout, styled drop zone, transform controls, disclosure cards, receipt upload
+- [x] Verify: verified state (glassmorphic shield + attestation details), not-verified state (blurred image + error overlay)
+- [x] All business logic preserved (image hashing, receipt upload, contract verification, relay API)
+
+**Verify:** `cd frontend && npm run build` (all pages compile successfully)
+
+---
+
 ## Key Risks
 
 1. **`image` crate riscv32im compilation** — highest risk. Fallback: pass raw pixels from host (weaker proof).
