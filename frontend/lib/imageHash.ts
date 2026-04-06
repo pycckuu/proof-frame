@@ -6,12 +6,14 @@
  */
 export async function computePixelHash(file: File): Promise<string> {
   const blob = new Blob([await file.arrayBuffer()]);
-  const bitmap = await createImageBitmap(blob);
+  // Disable color space conversion to match Rust image crate's raw decode
+  const bitmap = await createImageBitmap(blob, { colorSpaceConversion: "none" });
 
   const canvas = document.createElement("canvas");
   canvas.width = bitmap.width;
   canvas.height = bitmap.height;
-  const ctx = canvas.getContext("2d")!;
+  // Use srgb color space to prevent browser color management
+  const ctx = canvas.getContext("2d", { colorSpace: "srgb" })!;
   ctx.drawImage(bitmap, 0, 0);
 
   // Get RGBA pixels from canvas

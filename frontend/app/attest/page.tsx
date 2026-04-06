@@ -581,7 +581,7 @@ export default function AttestPage() {
 
             {proveStatus === "proving" && (
               <p className="text-center mt-3 text-[10px] font-label text-outline uppercase tracking-widest">
-                Running RISC Zero zkVM · ~3 seconds in dev mode
+                Running RISC Zero zkVM
               </p>
             )}
 

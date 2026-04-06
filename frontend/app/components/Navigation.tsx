@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Navigation() {
@@ -25,7 +26,8 @@ export default function Navigation() {
   return (
     <nav className="w-full top-0 sticky z-50 bg-[#131313] font-body font-light tracking-tight">
       <div className="flex justify-between items-center px-8 py-6 max-w-[1440px] mx-auto bg-[#1c1b1b]">
-        <Link href="/" className="text-2xl font-bold tracking-tighter text-[#adc6ff]">
+        <Link href="/" className="flex items-center gap-3 text-2xl font-bold tracking-tighter text-[#adc6ff]">
+          <Image src="/logo.png" alt="ProofFrame" width={36} height={36} className="rounded-lg" />
           ProofFrame
         </Link>
         <div className="hidden md:flex items-center gap-8">
