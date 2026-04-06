@@ -125,7 +125,17 @@ export async function POST(req: Request) {
 
     return Response.json({ txHash: hash, ensName, ipfsCid }, { headers: corsHeaders() });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    let message = err instanceof Error ? err.message : "Unknown error";
+
+    // Decode known contract errors into human-readable messages
+    if (message.includes("0x00b83ed4")) {
+      message = "This image has already been attested. Each unique image (pixel hash) can only be attested once. Try a different image or apply different transforms.";
+    } else if (message.includes("0x78ffaa26")) {
+      message = "Duplicate World ID verification. This human has already attested this specific image.";
+    } else if (message.includes("0xb455aae8")) {
+      message = "ENS subdomain creation unauthorized. The contract needs NameWrapper operator approval.";
+    }
+
     return Response.json({ error: message }, { status: 500, headers: corsHeaders() });
   }
 }

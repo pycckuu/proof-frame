@@ -21,7 +21,7 @@ export default function Footer() {
           </a>
         </div>
         <div className="mt-4 text-[9px] text-outline/30 uppercase tracking-[0.3em]">
-          &copy; 2024 ProofFrame Protocol. Verifiable Reality.
+          &copy; 2026 ProofFrame Protocol. Verifiable Reality.
         </div>
       </div>
     </footer>
