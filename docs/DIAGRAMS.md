@@ -20,7 +20,7 @@ graph TB
 
     subgraph CHAIN["⛓️ Ethereum Sepolia"]
         CONTRACT[ImageAttestor.sol<br/>Verify ZK proof<br/>Verify World ID<br/>Store attestation]
-        ENS[ENS Text Records<br/>+ On-chain NameWrapper Subnames<br/>{label}.proof-frame.eth<br/>+ IPFS CID in text records]
+        ENS["ENS Text Records<br/>+ On-chain NameWrapper Subnames<br/>#123;label#125;.proof-frame.eth<br/>+ IPFS CID in text records"]
     end
 
     subgraph STORAGE["📦 Decentralized Storage"]
@@ -310,7 +310,7 @@ graph TB
 
     subgraph ENS_S["📛 ENS"]
         ENS_TR["Text records<br/>pixelHash, txHash, date<br/>location, camera, IPFS CID"]
-        ENS_SUB["On-chain subnames<br/>{label}.proof-frame.eth<br/>via NameWrapper"]
+        ENS_SUB["On-chain subnames<br/>#123;label#125;.proof-frame.eth<br/>via NameWrapper"]
         ENS_IPFS["IPFS integration<br/>Clean PNG at ipfs://Qm...<br/>via Infura pinning"]
         ENS_NOTE["'Most Creative' track<br/>ZK proofs + IPFS images<br/>in ENS text records"]
     end
